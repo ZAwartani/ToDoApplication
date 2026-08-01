@@ -19,7 +19,7 @@ namespace TodoApp.Presentation.Persistence
         DbSet<Roles> Roles { get; set; }
         DbSet<ToDoItem> ToDoItems { get; set; }
         DbSet<Category> Categories { get; set; }
-        //DbSet<FilesUpload> FilesUploads { get; set; }
+        DbSet<FilesUpload> FilesUploads { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -36,7 +36,7 @@ namespace TodoApp.Presentation.Persistence
             modelBuilder.Entity<ToDoItem>().HasIndex(x => new { x.UserId, x.Title }).IsUnique();
             modelBuilder.Entity<Category>().HasIndex(x => x.TitleOfCategory).IsUnique();
             modelBuilder.Entity<Category>().HasData(new { Id = 1 , TitleOfCategory = "UnCategorical"});
-            //modelBuilder.Entity<FilesUpload>().HasIndex(x => x.AddressNameFile).IsUnique();
+            modelBuilder.Entity<FilesUpload>().HasIndex(x => x.AddressNameFile).IsUnique();
             base.OnModelCreating(modelBuilder);
 
 

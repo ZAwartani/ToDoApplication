@@ -34,9 +34,6 @@ namespace TodoApp.Presentation.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int?>("fileUploadId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("TitleOfCategory")
@@ -85,23 +82,23 @@ namespace TodoApp.Presentation.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AddressNameFile")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<int?>("CategoryId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("TodoId")
+                    b.Property<int?>("ToDoItemId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AddressNameFile")
-                        .IsUnique()
-                        .HasFilter("[AddressNameFile] IS NOT NULL");
+                        .IsUnique();
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("TodoId");
+                    b.HasIndex("ToDoItemId");
 
                     b.ToTable("FilesUploads");
                 });
@@ -261,13 +258,15 @@ namespace TodoApp.Presentation.Migrations
 
             modelBuilder.Entity("ToDoApp.Domain.Entity.FilesUpload", b =>
                 {
-                    b.HasOne("ToDoApp.Domain.Entity.Category", null)
-                        .WithMany("Files")
+                    b.HasOne("ToDoApp.Domain.Entity.Category", "Category")
+                        .WithMany()
                         .HasForeignKey("CategoryId");
 
                     b.HasOne("ToDoApp.Domain.Entity.ToDoItem", "ToDoItem")
-                        .WithMany("Files")
-                        .HasForeignKey("TodoId");
+                        .WithMany()
+                        .HasForeignKey("ToDoItemId");
+
+                    b.Navigation("Category");
 
                     b.Navigation("ToDoItem");
                 });
@@ -315,19 +314,12 @@ namespace TodoApp.Presentation.Migrations
 
             modelBuilder.Entity("ToDoApp.Domain.Entity.Category", b =>
                 {
-                    b.Navigation("Files");
-
                     b.Navigation("ToDoItems");
                 });
 
             modelBuilder.Entity("ToDoApp.Domain.Entity.Roles", b =>
                 {
                     b.Navigation("Users");
-                });
-
-            modelBuilder.Entity("ToDoApp.Domain.Entity.ToDoItem", b =>
-                {
-                    b.Navigation("Files");
                 });
 
             modelBuilder.Entity("ToDoApp.Domain.Entity.Users", b =>

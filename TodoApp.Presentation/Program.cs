@@ -51,6 +51,8 @@ namespace TodoApp.Presentation
             builder.Services.AddScoped<IAdminService, AdminService>();
 
             builder.Services.AddScoped<ITodoService, ToDoService>();
+            builder.Services.AddScoped<IFileUploadService, FileUploadService>();
+            builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
 
 
