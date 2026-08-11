@@ -14,9 +14,12 @@ namespace ToDoApp.Domain.Entity
 
         public string TitleOfCategory { get; set; }
 
-        //public ICollection<FilesUpload> Files {  get; set; }
         public ICollection<ToDoItem> ToDoItems { get; set; }
 
+        public Category()
+        {
+
+        }
         public Category(string TitleOfCategory) 
         {
             if (string.IsNullOrWhiteSpace(TitleOfCategory))

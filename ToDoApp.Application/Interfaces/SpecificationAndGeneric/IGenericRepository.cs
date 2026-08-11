@@ -15,6 +15,7 @@ namespace ToDoApp.Application.Interfaces.Specification
         Task DeleteAsync(TKey Tkey);
         Task<IReadOnlyList<TEntity>> GetAllAsync();
         Task<TEntity?> GetByIdAsync(TKey key);
+        Task<TEntity> GetAsync(ISpecification<TEntity> specification);
         Task<IReadOnlyList<TEntity>> ListAsync(ISpecification<TEntity> specification);
 
     }

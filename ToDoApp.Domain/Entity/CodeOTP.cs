@@ -17,6 +17,11 @@ namespace ToDoApp.Domain.Entity
         [ForeignKey(nameof(Users))]
         public int UserId { get; set; }
         public Users Users { get; set; }
-        public CodeOTP() { }
+        public CodeOTP(string codeotp, DateTime? codeOTPExpir, int userId)
+        {
+            Codeotp = codeotp;
+            CodeOTPExpir = codeOTPExpir;
+            UserId = userId;
+        }
     }
 }

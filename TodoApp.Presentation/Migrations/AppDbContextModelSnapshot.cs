@@ -32,12 +32,9 @@ namespace TodoApp.Presentation.Migrations
 
                     b.Property<string>("TitleOfCategory")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("TitleOfCategory")
-                        .IsUnique();
 
                     b.ToTable("Categories");
 
@@ -161,7 +158,7 @@ namespace TodoApp.Presentation.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -170,11 +167,7 @@ namespace TodoApp.Presentation.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("Title")
-                        .IsUnique();
-
-                    b.HasIndex("UserId", "Title")
-                        .IsUnique();
+                    b.HasIndex("UserId");
 
                     b.ToTable("ToDoItems");
                 });
@@ -188,9 +181,10 @@ namespace TodoApp.Presentation.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("RefreshToken")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("RefreshTokenExpir")
+                    b.Property<DateTime>("RefreshTokenExpir")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("RefreshTokenRevokedAt")

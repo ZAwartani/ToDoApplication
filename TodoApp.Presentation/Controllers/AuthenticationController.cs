@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Hangfire;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ToDoApp.Application.DTOs;
 using ToDoApp.Application.Interfaces;
@@ -41,17 +42,10 @@ namespace TodoApp.Presentation.Controllers
         }
 
         [HttpPost("ForgetPassword")]
-        public async Task<IActionResult> ForgetPassword([FromBody]SendOTP sendOTP)
+        public async Task<IActionResult> ForgetPassword([FromBody] SendOTP sendOTP)
         {
-            var isSent = await _authentications.SendCodeAsync(sendOTP);
-            if (!isSent)
-            {
-                return BadRequest(new {message = "The Email Not Found!"});
-            }
-            else
-            {
-                return Ok(new {message = "Send Code Sucessful"});
-            }
+            BackgroundJob.Enqueue(() => _authentications.SendCodeAsync(sendOTP));
+            return Ok("We will send you a code to reset your password. This can take up to 3 minutes");
         }
 
         [HttpPost("Reset-Password")]
@@ -90,15 +84,8 @@ namespace TodoApp.Presentation.Controllers
         [HttpPost("Logout")]
         public async Task<IActionResult> Logout(LogoutDto dto)
         {
-            var isloggedout = await _authentications.Logout(dto);
-            if (isloggedout)
-            {
-                return Ok("Logout");
-            }
-            else
-            {
-                return BadRequest("Logout Un-Sucessful");
-            }
+            await _authentications.Logout(dto);
+            return Ok(new { message = "Logout Sucessful" });
         }
     }
 }

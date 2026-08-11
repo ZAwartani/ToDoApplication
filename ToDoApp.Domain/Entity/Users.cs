@@ -48,11 +48,6 @@ namespace ToDoApp.Domain.Entity
             this.CreatedAt = DateTime.UtcNow;
         }
 
-        public void UpdatePasswordForUser(string password )
-        {
-            this.Password = password;
-        }
-
         public void UpdatePasswordByAdmin(string Password)
         {
             this.Password = Password;

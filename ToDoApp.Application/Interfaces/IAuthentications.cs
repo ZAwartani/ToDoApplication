@@ -9,7 +9,7 @@ namespace ToDoApp.Application.Interfaces
     {
         Task RegisterNewUserAsync (RegisterNewUserDto registerDto);
         Task<TokenRespone> Login(LoginDto loginDto);
-        Task<bool> Logout(LogoutDto logoutDto);
+        Task Logout(LogoutDto logoutDto);
         Task<string?> ChangePassword(ForgetPasswordOTP ForgetDto);
         Task<bool> SendCodeAsync(SendOTP sendOTPDto);
         Task<TokenRespone> RefreshTokenAsync(RefreshToken refreshToken);

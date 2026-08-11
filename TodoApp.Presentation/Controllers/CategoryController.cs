@@ -7,8 +7,6 @@ using System.Security.Claims;
 using System.Security.Cryptography.Pkcs;
 using ToDoApp.Application.DTOs;
 using ToDoApp.Application.Interfaces;
-using ToDoApp.Application.Interfaces.Specification.SpecificationQuery.Include.CategoryQ;
-using ToDoApp.Application.Interfaces.Specification.SpecificationQuery.Searching.Todo;
 using ToDoApp.Application.Services;
 using ToDoApp.Domain.Enums;
 
@@ -40,7 +38,7 @@ namespace TodoApp.Presentation.Controllers
         }
 
         [HttpPost("CreateCategory")]
-        public async Task<IActionResult> CreateCategory(CreateDto dto)
+        public async Task<IActionResult> CreateCategory(ReturnCategory dto)
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
             var result = await _categoryService.CreateCategory(dto, userId);
@@ -57,7 +55,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpPut("UpdateCategory/{id}")]
         public async Task<IActionResult> Update(
             int id,
-            CreateDto dto)
+            ReturnCategory dto)
         {
             int userId = int.Parse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier)
@@ -132,18 +130,22 @@ namespace TodoApp.Presentation.Controllers
             }
         }
 
-        [HttpGet("GetMyCategory")]
+        [HttpGet("GetMyCategoryWithTodo")]
         public async Task<IActionResult> GetMyCategoryWithTodo()
         {
             int userId = int.Parse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier)
             );
 
-            var specification =
-                new IncludeCategoryWithTodosItem(userId);
 
-            var result = await _categoryService.ListAsync(specification);
+            var result = await _categoryService.ListCategoryWithTodo(userId);
 
+            return Ok(result);
+        }
+        [HttpGet("ListCategories")]
+        public async Task<IActionResult> ListCategories()
+        {
+            var result = await _categoryService.ListCategories();
             return Ok(result);
         }
     }

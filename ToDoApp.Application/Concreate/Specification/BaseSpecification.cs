@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
+using ToDoApp.Application.Interfaces.Specification;
 
-namespace ToDoApp.Application.Interfaces.Specification
+namespace ToDoApp.Application.Concreate.Specification
 {
     public class BaseSpecification<TEntity> : ISpecification<TEntity>
     {
@@ -15,18 +16,22 @@ namespace ToDoApp.Application.Interfaces.Specification
 
         public Expression<Func<TEntity, object>>? OrderByDescending { get; set; }
 
-        public int Skip => throw new NotImplementedException();
+        public int Skip { get; set; }
 
-        public int Task => throw new NotImplementedException();
+        public int Take {  get; set; }
 
-        public bool IsPagging => throw new NotImplementedException();
-        
+        public bool IsPagging { get; set; }
+       
 
-        public BaseSpecification(Expression<Func<TEntity, bool>> Criteria)
+        public BaseSpecification()
         {
-            this.Criteria = Criteria;
         }
-        protected void AddInclude(Expression<Func<TEntity, object>> include)
+
+        public void AddCriteria(Expression<Func<TEntity, bool>> criteria)
+        {
+            Criteria = criteria;
+        }
+        public void AddInclude(Expression<Func<TEntity, object>> include)
         {
             Include.Add(include);
         }
@@ -38,6 +43,14 @@ namespace ToDoApp.Application.Interfaces.Specification
         public void ApplyOrderByDesc(Expression<Func<TEntity , object>> orderByDesc)
         {
             this.OrderByDescending = orderByDesc;
+        }
+        public void ApplyPaging(
+            int pageIndex,
+            int pageSize)
+        {
+            Skip = (pageIndex - 1) * pageSize;
+            Take = pageSize;
+            IsPagging = true;
         }
     }
 }

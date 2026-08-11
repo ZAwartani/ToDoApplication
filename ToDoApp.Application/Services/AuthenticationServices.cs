@@ -1,15 +1,15 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using MailKit.Net.Smtp;
+﻿using MailKit.Net.Smtp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using MimeKit;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using ToDoApp.Application.DTOs;
 using ToDoApp.Application.Interfaces;
+using ToDoApp.Application.Interfaces.Factory;
 using ToDoApp.Application.Interfaces.Specification;
-using ToDoApp.Application.Interfaces.Specification.SpecificationQuery.Filter;
 using ToDoApp.Domain.Entity;
 using ToDoApp.Domain.Enums;
 
@@ -20,17 +20,20 @@ namespace ToDoApp.Application.Services
         private readonly IGenericRepository<Users, int> _genericRepositoryUser;
         private readonly IGenericRepository<Token, int> _genericRepositoryToken;
         private readonly IGenericRepository<CodeOTP, int> _genericRepositoryCode;
+        private readonly ISpecificationBuilderFactory _factory;
         private readonly IConfiguration _configuration;
 
         public AuthenticationServices(
             IGenericRepository<Users, int> genericRepositoryUser,
             IGenericRepository<Token, int> genericRepositoryToken,
             IGenericRepository<CodeOTP, int> genericRepositoryCode,
+            ISpecificationBuilderFactory factory,
             IConfiguration configuration)
         {
             _genericRepositoryUser = genericRepositoryUser;
             _genericRepositoryToken = genericRepositoryToken;
             _genericRepositoryCode = genericRepositoryCode;
+            _factory = factory;
             _configuration = configuration;
         }
 
@@ -49,70 +52,88 @@ namespace ToDoApp.Application.Services
 
         public async Task<TokenRespone?> Login(LoginDto loginDto)
         {
-            var spec = new GetListByEmail(loginDto.Email);
-            var users = await _genericRepositoryUser.ListAsync(spec);
-            var user = users.SingleOrDefault();
+            var spec = _factory.CreateUserBuilder()
+                .WithEmail(loginDto.Email)
+                .Build();
 
-            if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.Password))
-                return null;
+            var users = await _genericRepositoryUser.GetAsync(spec);
 
-            var tokenSpec = new GetTokenByIdUser(user.Id);
-            var existingTokens = await _genericRepositoryToken.ListAsync(tokenSpec);
-            var userToken = existingTokens.SingleOrDefault() ?? new Token{ UserId = user.Id };
+            if (users == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, users.Password))
+                throw new Exception("Invalid email or password");
 
-            var tokenResponse = await GenerateAndSaveTokensAsync(user, userToken);
+
+            var tokenSpec = _factory.CreateTokenBuilder()
+                 .GetTokenByIdUser(users.Id)
+                 .Build();
+            
+            var userToken = await _genericRepositoryToken.GetAsync(tokenSpec);
+            if (userToken != null)
+            {
+                userToken.RefreshTokenRevokedAt = DateTime.UtcNow;
+                await _genericRepositoryToken.UpdateAsync(userToken);
+            }
+
+            var tokenResponse = await GenerateAndSaveTokensAsync(users);
             return tokenResponse;
         }
 
-        public async Task<bool> Logout(LogoutDto logoutDto)
+        public async Task Logout(LogoutDto logoutDto)
         {
-            var spec = new GetListByEmail(logoutDto.Email);
-            var user = (await _genericRepositoryUser.ListAsync(spec)).SingleOrDefault();
+            var spec = _factory.CreateUserBuilder()
+                .WithEmail(logoutDto.Email)
+                .Build();
+
+            var user = (await _genericRepositoryUser.GetAsync(spec));
 
             if (user == null)
-                return false;
+                throw new Exception("User not found");
 
-            var tokenSpec = new GetTokenByIdUser(user.Id);
-            var userToken = (await _genericRepositoryToken.ListAsync(tokenSpec)).SingleOrDefault();
+            var tokenSpec = _factory.CreateTokenBuilder()
+                .GetTokenByIdUser(user.Id)
+                .Build();
+
+            var userToken = await _genericRepositoryToken.GetAsync(tokenSpec);
 
             if (userToken == null || userToken.RefreshToken == null)
-                return false;
+                throw new Exception("The refresh token is invalid");
 
             if (!BCrypt.Net.BCrypt.Verify(logoutDto.RefreshToken, userToken.RefreshToken))
-                return false;
+                throw new Exception("The refresh token is invalid");
 
-            userToken.RefreshToken = null;
             userToken.RefreshTokenRevokedAt = DateTime.UtcNow;
-            userToken.RefreshTokenExpir = null;
 
             await _genericRepositoryToken.UpdateAsync(userToken);
-            return true;
         }
 
         public async Task<string?> ChangePassword(ForgetPasswordOTP forgetDto)
         {
-            var userSpec = new GetListByEmail(forgetDto.email);
-            var users = await _genericRepositoryUser.ListAsync(userSpec);
-            var user = users.SingleOrDefault();
+            var userSpec = _factory.CreateUserBuilder()
+                .WithEmail(forgetDto.email)
+                .Build();
 
-            if (user == null)
-                return null;
+            var users = await _genericRepositoryUser.GetAsync(userSpec);
 
-            var otpSpec = new GetOTPByUserId(user.Id);
+            if (users == null)
+                throw new Exception("User not found");
+
+            var otpSpec = _factory.CreateCodeOTPBuilder()
+                .GetOTPByUserId(users.Id)
+                .Build();
+
             var otpList = await _genericRepositoryCode.ListAsync(otpSpec);
             var otp = otpList.SingleOrDefault();
 
             if (otp == null)
-                return null;
+                throw new Exception("Invalid verification code");
 
             if (otp.Codeotp != forgetDto.OTP)
-                return null;
+                throw new Exception("Invalid verification code");
 
             if (otp.CodeOTPExpir < DateTime.UtcNow)
-                return null;
+                throw new Exception("Verification code has expired");
 
-            user.Password = BCrypt.Net.BCrypt.HashPassword(forgetDto.HashPassword);
-            await _genericRepositoryUser.UpdateAsync(user);
+            users.Password = BCrypt.Net.BCrypt.HashPassword(forgetDto.Password);
+            await _genericRepositoryUser.UpdateAsync(users);
 
             await _genericRepositoryCode.DeleteAsync(otp.Id);
 
@@ -121,25 +142,34 @@ namespace ToDoApp.Application.Services
 
         public async Task<bool> SendCodeAsync(SendOTP sendOTPDto)
         {
-            var spec = new GetListByEmail(sendOTPDto.email);
+            var spec = _factory.CreateUserBuilder()
+                .WithEmail(sendOTPDto.email)
+                .Build();
 
-            var user = (await _genericRepositoryUser.ListAsync(spec))
-                .SingleOrDefault();
+            var user = (await _genericRepositoryUser.GetAsync(spec));
 
             if (user == null)
-                return false;
+                throw new Exception("User not found");
 
+            string codeOTPToEmail = RandomNumberGenerator.GetInt32(10000, 99999).ToString();
+            MimeMessage message = new MimeMessage();
+            message.From.Add(new MailboxAddress("TodoApp", "zakaryawork005@gmail.com"));
+            message.To.Add(new MailboxAddress("User", sendOTPDto.email));
+            message.Subject = "Reset Your Password - TodoApp";
 
-            string codeOTPToEmail =
-                RandomNumberGenerator.GetInt32(10000, 99999).ToString();
+            message.Body = new TextPart("plain")
+            {
+                Text = $"This is your verification code: {codeOTPToEmail}. It will expire in 5 minutes."
+            };
 
-
-            var otpSpec = new GetOTPByUserId(user.Id);
+            await _genericRepositoryCode.RemoveRangeAsync(await _genericRepositoryCode.ListAsync(_factory.CreateCodeOTPBuilder().GetOTPByUserId(user.Id).Build()));
+            
+            var otpSpec = _factory.CreateCodeOTPBuilder()
+                .GetOTPByUserId(user.Id)
+                .Build();
 
             var existingOtp =
-                (await _genericRepositoryCode.ListAsync(otpSpec))
-                .SingleOrDefault();
-
+                (await _genericRepositoryCode.GetAsync(otpSpec));
 
             if (existingOtp != null)
             {
@@ -151,45 +181,73 @@ namespace ToDoApp.Application.Services
             else
             {
                 var newOtp = new CodeOTP
-                {
-                    Codeotp = codeOTPToEmail,
-                    CodeOTPExpir = DateTime.UtcNow.AddMinutes(5),
-                    UserId = user.Id
-                };
+                (
+                    codeOTPToEmail,
+                    DateTime.UtcNow.AddMinutes(5),
+                    user.Id
+                );
 
                 await _genericRepositoryCode.AddAsync(newOtp);
             }
 
-            return true;
+            using (var client = new SmtpClient())
+            {
+                try
+                {
+                    await client.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
+                    await client.AuthenticateAsync("zakaryawork005@gmail.com", "qkukqdjeaqbxkjod");
+                    await client.SendAsync(message);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"حدث خطأ أثناء الإرسال: {ex.Message}");
+                    return false;
+                }
+                finally
+                {
+                    await client.DisconnectAsync(true);
+                }
+            }
         }
 
         public async Task<TokenRespone?> RefreshTokenAsync(RefreshToken refreshToken)
         {
-            var spec = new GetListByEmail(refreshToken.Email);
-            var user = (await _genericRepositoryUser.ListAsync(spec)).SingleOrDefault();
+            var spec = _factory.CreateUserBuilder()
+                .WithEmail(refreshToken.Email)
+                .Build();
+
+            var user = (await _genericRepositoryUser.GetAsync(spec));
 
             if (user == null)
-                return null;
+                throw new Exception("User not found");
 
-            var tokenSpec = new GetTokenByIdUser(user.Id);
-            var userToken = (await _genericRepositoryToken.ListAsync(tokenSpec)).SingleOrDefault();
+            var tokenSpec = _factory.CreateTokenBuilder()
+                .GetTokenByIdUser(user.Id)
+                .Build();
+
+            var userToken = (await _genericRepositoryToken.GetAsync(tokenSpec));
 
             if (userToken == null)
-                return null;
+                throw new Exception("Invalid refresh token");
 
             if (userToken.RefreshTokenRevokedAt != null)
-                return null;
+                throw new Exception("Refresh token has been revoked");
 
-            if (userToken.RefreshTokenExpir == null || userToken.RefreshTokenExpir < DateTime.UtcNow)
-                return null;
+            if (userToken.RefreshTokenExpir < DateTime.UtcNow)
+                throw new Exception("Refresh token has expired");
 
             if (!BCrypt.Net.BCrypt.Verify(refreshToken.Refreshtoken, userToken.RefreshToken))
-                return null;
+                throw new Exception("Invalid refresh token");
 
-            return await GenerateAndSaveTokensAsync(user, userToken);
+            userToken.RefreshTokenRevokedAt = DateTime.UtcNow;
+
+            await _genericRepositoryToken.UpdateAsync(userToken);
+
+            return await GenerateAndSaveTokensAsync(user);
         }
 
-        private async Task<TokenRespone> GenerateAndSaveTokensAsync(Users user, Token userToken)
+        private async Task<TokenRespone> GenerateAndSaveTokensAsync(Users user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtKey = _configuration["JWT:Key"] ?? "LONG_SECURE_KEY_32_CHARS_MINIMUM_LENGTH";
@@ -216,18 +274,14 @@ namespace ToDoApp.Application.Services
             var accessToken = tokenHandler.WriteToken(jwt);
             var rawRefreshToken = GenerateRefreshToken();
 
-            userToken.RefreshToken = BCrypt.Net.BCrypt.HashPassword(rawRefreshToken);
-            userToken.RefreshTokenExpir = DateTime.UtcNow.AddDays(7);
-            userToken.RefreshTokenRevokedAt = null;
-
-            if (userToken.Id == 0)
+            var userToken = new Token
             {
-                await _genericRepositoryToken.AddAsync(userToken);
-            }
-            else
-            {
-                await _genericRepositoryToken.UpdateAsync(userToken);
-            }
+                UserId = user.Id,
+                RefreshToken = BCrypt.Net.BCrypt.HashPassword(rawRefreshToken),
+                RefreshTokenExpir = DateTime.UtcNow.AddDays(7),
+                RefreshTokenRevokedAt = null
+            };
+            await _genericRepositoryToken.AddAsync(userToken);
 
             return new TokenRespone(accessToken, rawRefreshToken);
         }
@@ -240,6 +294,6 @@ namespace ToDoApp.Application.Services
             return Convert.ToBase64String(bytes);
         }
 
-       
+        
     }
 }

@@ -1,7 +1,7 @@
 ﻿using ToDoApp.Application.DTOs;
 using ToDoApp.Application.Interfaces;
+using ToDoApp.Application.Interfaces.Factory;
 using ToDoApp.Application.Interfaces.Specification;
-using ToDoApp.Application.Interfaces.Specification.SpecificationQuery.Filter;
 using ToDoApp.Domain.Entity;
 
 namespace ToDoApp.Application.Services
@@ -10,13 +10,16 @@ namespace ToDoApp.Application.Services
     {
         private readonly IGenericRepository<FilesUpload, int> _repository;
         private readonly IFileStorageService _fileStorage;
+        private readonly ISpecificationBuilderFactory _factory;
 
         public FileUploadService(
             IGenericRepository<FilesUpload, int> repository,
-            IFileStorageService fileStorage)
+            IFileStorageService fileStorage,
+            ISpecificationBuilderFactory specificationBuilderFactory)
         {
             _repository = repository;
             _fileStorage = fileStorage;
+            _factory = specificationBuilderFactory;
         }
 
         public async Task<bool> DeleteAsync(int fileId)
@@ -35,7 +38,9 @@ namespace ToDoApp.Application.Services
 
         public async Task<IReadOnlyList<ReturnToClientFileUploadDTO>> GetFilesByCategoryIdAsync(int categoryId)
         {
-            var specification = new FileUploadByCategorySpecification(categoryId);
+            var specification = _factory.CreateFileUploadBuilder()
+                .GetFilesByCategoryId(categoryId)
+                .Build();
 
             var files = await _repository.ListAsync(specification);
 
@@ -49,7 +54,9 @@ namespace ToDoApp.Application.Services
 
         public async Task<IReadOnlyList<ReturnToClientFileUploadDTO>> GetFilesByTodoItemIdAsync(int todoItemId)
         {
-            var specification = new FileUploadByTodoSpecification(todoItemId);
+            var specification = _factory.CreateFileUploadBuilder()
+                .GetFileByTodoId(todoItemId)
+                .Build();
 
             var files = await _repository.ListAsync(specification);
 

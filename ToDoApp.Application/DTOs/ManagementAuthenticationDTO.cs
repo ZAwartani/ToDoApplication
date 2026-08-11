@@ -9,11 +9,9 @@ namespace ToDoApp.Application.DTOs
     public record LoginDto(string Email , string Password);
     public record RegisterNewUserDto(string UserName, string Email, string Password);
     public record SendOTP(string email);
-    public record ForgetPasswordOTP(string email,string HashPassword,string OTP);
+    public record ForgetPasswordOTP(string email,string Password,string OTP);
     public record LogoutDto(string Email, string RefreshToken);
     public record TokenRespone(string AccessToken, string RefreshToken);
     public record RefreshToken(string Email, string Refreshtoken);
-
- 
 
 }

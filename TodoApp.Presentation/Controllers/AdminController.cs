@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ToDoApp.Application.DTOs;
 using ToDoApp.Application.Interfaces;
-using ToDoApp.Application.Interfaces.Specification.SpecificationQuery.Include.CategoryQ;
 
 namespace TodoApp.Presentation.Controllers
 {
@@ -83,8 +82,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpGet("GetTodoWithCategory/{UserId}")]
         public async Task<IActionResult> GetTodoWithCategory(int UserId)
         {
-            var spec = new IncludeCategoryWithTodosItem(UserId);
-            var todo = await _categoryService.ListAsync(spec);
+            var todo = await _categoryService.ListCategoryWithTodo(UserId);
 
             if (todo == null)
                 return NotFound("This User Dont Found Or Don't Have TodoItem");

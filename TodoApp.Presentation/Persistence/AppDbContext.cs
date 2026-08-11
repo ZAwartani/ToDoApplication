@@ -32,9 +32,6 @@ namespace TodoApp.Presentation.Persistence
                         new Roles { Id = enumUserRole.User, RoleName = "User" }
                 );
 
-            modelBuilder.Entity<ToDoItem>().HasIndex(x => x.Title).IsUnique();
-            modelBuilder.Entity<ToDoItem>().HasIndex(x => new { x.UserId, x.Title }).IsUnique();
-            modelBuilder.Entity<Category>().HasIndex(x => x.TitleOfCategory).IsUnique();
             modelBuilder.Entity<Category>().HasData(new { Id = 1 , TitleOfCategory = "UnCategorical"});
             modelBuilder.Entity<FilesUpload>().HasIndex(x => x.AddressNameFile).IsUnique();
             base.OnModelCreating(modelBuilder);

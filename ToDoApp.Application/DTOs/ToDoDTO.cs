@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Security.Cryptography.Pkcs;
 using System.Text;
 using ToDoApp.Domain.Enums;
 
@@ -23,7 +24,7 @@ namespace ToDoApp.Application.DTOs
         string Description,
         EnumPriority Priority,
         DateTime ExpireDate,
-        string TitleCategory,
+        string? TitleCategory,
         EnumRecurring? Recurring
     );
 
@@ -51,5 +52,11 @@ namespace ToDoApp.Application.DTOs
         EnumPriority Priority,
         DateTime ExpireDate,
         EnumCompleteStatus IsComplete
+    );
+
+    public record TodoItemSendNotificationDTO
+    (
+        string Title,
+        DateTime ExpireAt
     );
 }

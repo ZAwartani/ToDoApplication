@@ -1,7 +1,8 @@
-﻿using ToDoApp.Application.DTOs;
+﻿using System.Net.Http.Headers;
+using ToDoApp.Application.DTOs;
 using ToDoApp.Application.Interfaces;
+using ToDoApp.Application.Interfaces.Factory;
 using ToDoApp.Application.Interfaces.Specification;
-using ToDoApp.Application.Interfaces.Specification.SpecificationQuery.Searching.CategoryQ;
 using ToDoApp.Domain.Entity;
 using ToDoApp.Domain.Enums;
 
@@ -9,31 +10,40 @@ namespace ToDoApp.Application.Services
 {
     public class ToDoService : ITodoService
     {
-        //private readonly IGenericRepository<FilesUpload ,int> _genericRepositoryAttachment;
         private readonly IGenericRepository<ToDoItem, int> _genericRepositoryTodoItem;
         private readonly IGenericRepository<Category, int> _genericRepositoryCategory;
 
+        private readonly ISpecificationBuilderFactory _factory;
+
         public ToDoService(
             IGenericRepository<ToDoItem, int> genericRepositoryTodoItem,
-            IGenericRepository<Category, int> genericRepositoryCategory
+            IGenericRepository<Category, int> genericRepositoryCategory,
+            ISpecificationBuilderFactory factory
             )
         {
             this._genericRepositoryTodoItem = genericRepositoryTodoItem;
             this._genericRepositoryCategory = genericRepositoryCategory;
-            //this._genericRepositoryAttachment = _genericRepositoryAttachment;
+            this._factory = factory;
         }
 
         public async Task<bool> CreateTodo(CreateTodoDto dto, int userId)
         {
-            var specCategory = new SearchingTitleOnCategory(dto.TitleCategory);
+            var categoryId = 1;
+            if(!string.IsNullOrWhiteSpace(dto.TitleCategory)) {
+                var specCategory = _factory.CreateCategoryBuilder()
+                   .WithTitle(dto.TitleCategory)
+                   .Build();
 
-            var category = await _genericRepositoryCategory
-                .ListAsync(specCategory);
+                var category = await _genericRepositoryCategory
+                    .GetAsync(specCategory);
 
 
-            if (!category.Any())
-                return false;
+                if (category == null)
+                    throw new Exception("Category not found");
 
+                else
+                    categoryId = category.Id;
+            }
 
             var todo = new ToDoItem(
                 dto.Title,
@@ -41,7 +51,7 @@ namespace ToDoApp.Application.Services
                 dto.Priority,
                 userId,
                 dto.ExpireDate,
-                category.First().Id
+                categoryId
             );
 
             await _genericRepositoryTodoItem.AddAsync(todo);
@@ -49,27 +59,34 @@ namespace ToDoApp.Application.Services
             return true;
         }
 
-        public async Task<IReadOnlyList<ReturnTodoItem>> ListAsync(
-            ISpecification<ToDoItem> specification)
+        public async Task<IReadOnlyList<ReturnTodoItem>> ListTodoItemAsync( int UserId)
         {
+            var spec = _factory.CreateTodoBuilder()
+                .GetUserTodoItem(UserId)
+                .Build();
 
-            var result = await _genericRepositoryTodoItem
-                .ListAsync(specification);
-
-            var CategoricalId = result.First().CategoryId;
-            var SearchingForTitleCate = await _genericRepositoryCategory.GetByIdAsync(CategoricalId);
+            var result = await _genericRepositoryTodoItem.GetAsync(spec);
+            if (result == null)
+                throw new Exception("User Dont Have Any TodoItem");
+            
+            var SearchingForTitleCate = await _genericRepositoryCategory.GetByIdAsync(result.CategoryId);
             var CategoricalTitle = SearchingForTitleCate.TitleOfCategory;
-            var mapped = result.Select(x => new ReturnTodoItem(
-                x.Id,
-                x.Title,
-                x.Description,
-                x.Priority,
-                x.CreatedAt,
-                x.ExpireDate,
-                CategoricalTitle,
-                x.IsComplete,
-                x.RecurringSetting
-            )).ToList();
+
+            var mapped = new List<ReturnTodoItem>
+            {
+                new ReturnTodoItem
+                (
+                    result.Id,
+                    result.Title,
+                    result.Description,
+                    result.Priority,
+                    result.CreatedAt,
+                    result.ExpireDate,
+                    CategoricalTitle,
+                    result.IsComplete,
+                    result.RecurringSetting
+                )
+            };
 
 
             return mapped;
@@ -84,10 +101,18 @@ namespace ToDoApp.Application.Services
 
             if (todo == null || todo.UserId != userId)
                 return false;
-            var spec = new SearchingTitleOnCategory(dto.TitleCategory);
-            var resultspec = await _genericRepositoryCategory.ListAsync(spec);
-            if (!resultspec.Any()) return false;
-            var categoricalId = resultspec.First().Id; 
+
+            var categoricalId = 1;
+            if (!string.IsNullOrWhiteSpace(dto.TitleCategory))
+            {
+                var spec = _factory.CreateCategoryBuilder()
+                .WithTitle(dto.TitleCategory)
+                .Build();
+                var resultspec = await _genericRepositoryCategory.ListAsync(spec);
+                if (!resultspec.Any()) return false;
+                categoricalId = resultspec.First().Id;
+            }
+           
             todo.Update(
                 dto.Title,
                 dto.Description,
@@ -141,15 +166,5 @@ namespace ToDoApp.Application.Services
             return true;
         }
 
-        //public async Task<bool> UploadAttachment(UploadAttachmentsDTO Uploadto)
-        //{
-            
-        //    return true;
-        //}
-
-        //public Task<bool> RemoveAttachment(RemoveAttachmentsDTO Removedto)
-        //{
-        //    throw new ArgumentException();
-        //}
     }
 }

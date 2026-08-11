@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Hangfire;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using ToDoApp.Application.DTOs;
 using ToDoApp.Application.Interfaces;
-using ToDoApp.Application.Interfaces.Specification.SpecificationQuery.Searching.Todo;
 
 namespace TodoApp.Presentation.Controllers
 {
@@ -35,7 +35,6 @@ namespace TodoApp.Presentation.Controllers
 
             if (!result)
                 return BadRequest("Category not found");
-
 
             return Ok("Created Successfully");
         }
@@ -113,20 +112,14 @@ namespace TodoApp.Presentation.Controllers
                 User.FindFirstValue(ClaimTypes.NameIdentifier)
             );
 
-
-            var specification =
-                new GetUserTodosSpecification(userId);
-            var result =
-                await _todoService.ListAsync(specification);
-
-            if (result.Count > 0)
-            {
-                return Ok(result);
-            }
-            else
-            {
-                return BadRequest();
-            }
+            var todos = await _todoService.ListTodoItemAsync(userId);
+            return Ok(todos);
         }
     }
 }
+
+/*
+ They Must Check the Expiredate when that create a todo item and if the expiredate is less than the current date they must return a bad request with a message "Expire date must be greater than current date"
+ 
+ 
+ */

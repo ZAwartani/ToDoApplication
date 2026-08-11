@@ -1,3 +1,4 @@
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -5,7 +6,9 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using TodoApp.Presentation.Persistence;
 using TodoApp.Presentation.Repositories;
+using ToDoApp.Application.Concreate.Factoryes;
 using ToDoApp.Application.Interfaces;
+using ToDoApp.Application.Interfaces.Factory;
 using ToDoApp.Application.Interfaces.Specification;
 using ToDoApp.Application.Services;
 
@@ -35,6 +38,13 @@ namespace TodoApp.Presentation
                 );
             });
 
+            builder.Services.AddHangfire(configuration => configuration.UseSqlServerStorage(
+                builder.Configuration.GetConnectionString("MyConnection")
+            ));
+
+            builder.Services.AddHangfireServer();
+
+
 
 
             // ============================
@@ -53,6 +63,7 @@ namespace TodoApp.Presentation
             builder.Services.AddScoped<ITodoService, ToDoService>();
             builder.Services.AddScoped<IFileUploadService, FileUploadService>();
             builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+            builder.Services.AddScoped<ISpecificationBuilderFactory, SpeificationBuilderFactory>();
 
 
 
@@ -209,7 +220,7 @@ namespace TodoApp.Presentation
                 app.UseSwaggerUI();
             }
 
-
+            app.UseHangfireDashboard();
             app.UseHttpsRedirection();
 
 

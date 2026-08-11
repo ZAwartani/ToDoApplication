@@ -11,8 +11,8 @@ namespace ToDoApp.Application.Interfaces.Specification
         List<Expression<Func<TEntity, object>>> Include { get; }
         Expression<Func<TEntity, object>>? OrderBy { get; }
         Expression<Func<TEntity, object>>? OrderByDescending { get; }
-        int Skip { get; }
-        int Task { get; }
-        bool IsPagging { get; }
+        public int Skip { get; }
+        public int Take { get; }
+        public bool IsPagging { get; }
     }
 }

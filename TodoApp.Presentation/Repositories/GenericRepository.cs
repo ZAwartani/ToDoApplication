@@ -28,10 +28,24 @@ namespace TodoApp.Presentation.Repositories
             }
         }
 
+        public async Task DeleteAsync(List<TEntity> entities)
+        {
+            _context.Set<TEntity>().RemoveRange(entities);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<IReadOnlyList<TEntity>> GetAllAsync()
         {
             var list = await _context.Set<TEntity>().AsNoTracking().ToListAsync();
             return list;
+        }
+
+        public async Task<TEntity> GetAsync(ISpecification<TEntity> specification)
+        {
+            return await SpecificationEva<TEntity>
+                .GetQuery(_context.Set<TEntity>().AsQueryable(), specification)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
         }
 
         public async Task<TEntity?> GetByIdAsync(TKey key)

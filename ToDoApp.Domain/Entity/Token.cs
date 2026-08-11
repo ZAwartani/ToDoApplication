@@ -11,8 +11,8 @@ namespace ToDoApp.Domain.Entity
     {
         [Key]
         public int Id { get; set; }
-        public string? RefreshToken { get; set; }
-        public DateTime? RefreshTokenExpir { get; set; }
+        public string RefreshToken { get; set; }
+        public DateTime RefreshTokenExpir { get; set; }
         public DateTime? RefreshTokenRevokedAt { get; set; }
 
         [ForeignKey(nameof(Users))]
@@ -24,7 +24,7 @@ namespace ToDoApp.Domain.Entity
         {
             this.UserId = UserId;
         }
-        public Token(string? RefreshToken , DateTime? RefreshExpire , DateTime? RefreshTokenRevoked) 
+        public Token(string RefreshToken , DateTime RefreshExpire , DateTime? RefreshTokenRevoked) 
         {
             this.RefreshToken = RefreshToken;
             this.RefreshTokenExpir = RefreshExpire;
