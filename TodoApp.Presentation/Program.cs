@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Org.BouncyCastle.Asn1.X509.Qualified;
 using System.Text;
 using TodoApp.Presentation.Persistence;
 using TodoApp.Presentation.Repositories;
@@ -63,8 +64,7 @@ namespace TodoApp.Presentation
             builder.Services.AddScoped<ITodoService, ToDoService>();
             builder.Services.AddScoped<IFileUploadService, FileUploadService>();
             builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
-            builder.Services.AddScoped<ISpecificationBuilderFactory, SpeificationBuilderFactory>();
-
+            builder.Services.AddSingleton<ISpecificationBuilderFactory,SpeificationBuilderFactory>();
 
 
             // ============================

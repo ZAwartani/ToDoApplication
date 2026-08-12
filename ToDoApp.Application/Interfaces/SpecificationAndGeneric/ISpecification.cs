@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
+using ToDoApp.Application.Concreate.Specification;
 
 namespace ToDoApp.Application.Interfaces.Specification
 {
@@ -14,5 +15,11 @@ namespace ToDoApp.Application.Interfaces.Specification
         public int Skip { get; }
         public int Take { get; }
         public bool IsPagging { get; }
+
+        BaseSpecificationBuilder<TEntity> AddCriteria(Expression<Func<TEntity, bool>> criteria);
+        BaseSpecificationBuilder<TEntity> AddInclude(Expression<Func<TEntity, object>> include);
+        BaseSpecificationBuilder<TEntity> ApplyOrderBy(Expression<Func<TEntity, object>> orderBy);
+        BaseSpecificationBuilder<TEntity> ApplyOrderByDesc(Expression<Func<TEntity, object>> orderByDesc);
+        BaseSpecificationBuilder<TEntity> ApplyPaging(int pageIndex, int pageSize);
     }
 }

@@ -15,6 +15,7 @@ namespace ToDoApp.Application.Services
 
         private readonly ISpecificationBuilderFactory _factory;
 
+
         public ToDoService(
             IGenericRepository<ToDoItem, int> genericRepositoryTodoItem,
             IGenericRepository<Category, int> genericRepositoryCategory,
@@ -30,9 +31,8 @@ namespace ToDoApp.Application.Services
         {
             var categoryId = 1;
             if(!string.IsNullOrWhiteSpace(dto.TitleCategory)) {
-                var specCategory = _factory.CreateCategoryBuilder()
-                   .WithTitle(dto.TitleCategory)
-                   .Build();
+                var specCategory = _factory.CreateBuilder<Category>()
+                   .AddCriteria(x => x.TitleOfCategory == dto.TitleCategory);
 
                 var category = await _genericRepositoryCategory
                     .GetAsync(specCategory);
@@ -61,11 +61,11 @@ namespace ToDoApp.Application.Services
 
         public async Task<IReadOnlyList<ReturnTodoItem>> ListTodoItemAsync( int UserId)
         {
-            var spec = _factory.CreateTodoBuilder()
-                .GetUserTodoItem(UserId)
-                .Build();
+            var spec = _factory.CreateBuilder<ToDoItem>()
+                .AddCriteria(x => x.UserId == UserId);
 
             var result = await _genericRepositoryTodoItem.GetAsync(spec);
+
             if (result == null)
                 throw new Exception("User Dont Have Any TodoItem");
             
@@ -105,9 +105,9 @@ namespace ToDoApp.Application.Services
             var categoricalId = 1;
             if (!string.IsNullOrWhiteSpace(dto.TitleCategory))
             {
-                var spec = _factory.CreateCategoryBuilder()
-                .WithTitle(dto.TitleCategory)
-                .Build();
+                var spec = _factory.CreateBuilder<Category>()
+                    .AddCriteria(x => x.TitleOfCategory == dto.TitleCategory);
+
                 var resultspec = await _genericRepositoryCategory.ListAsync(spec);
                 if (!resultspec.Any()) return false;
                 categoricalId = resultspec.First().Id;

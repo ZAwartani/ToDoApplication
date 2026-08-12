@@ -16,19 +16,22 @@ namespace ToDoApp.Application.Services
         private readonly IGenericRepository<ToDoItem, int> _genericRepositoryTodoItem;
         private readonly IGenericRepository<Category, int> _genericRepositoryCategory;
         private readonly ISpecificationBuilderFactory _factory;
-        public AdminService(ISpecificationBuilderFactory specificationBuilderFactory,IGenericRepository<Users, int> genericRepositoryUser, IGenericRepository<ToDoItem, int> genericRepositoryTodoItem, IGenericRepository<Category, int> genericRepositoryCategory)
+        public AdminService(
+            ISpecificationBuilderFactory factory,
+            IGenericRepository<Users, int> genericRepositoryUser, 
+            IGenericRepository<ToDoItem, int> genericRepositoryTodoItem, 
+            IGenericRepository<Category, int> genericRepositoryCategory)
         {
             _genericRepositoryUser = genericRepositoryUser;
             _genericRepositoryTodoItem = genericRepositoryTodoItem;
             _genericRepositoryCategory = genericRepositoryCategory;
-            _factory = specificationBuilderFactory;
+            _factory = factory;
         }
         public async Task<bool> ChangePasswordUserByAdmin(
            AdminRestPasswordUserDto adminRestPasswordUserDto)
         {
-            var spec = _factory.CreateUserBuilder()
-                .WithEmail(adminRestPasswordUserDto.Email)
-                .Build();
+            var spec = _factory.CreateBuilder<Users>()
+                .AddCriteria(x => x.Email == adminRestPasswordUserDto.Email);
 
 
             var user = await _genericRepositoryUser.GetAsync(spec);
@@ -66,9 +69,8 @@ namespace ToDoApp.Application.Services
     RegisterNewUserDto newUser)
         {
 
-            var emailSpec = _factory.CreateUserBuilder()
-                .WithEmail(newUser.Email)
-                .Build();
+            var emailSpec = _factory.CreateBuilder<Users>()
+                .AddCriteria(x => x.Email == newUser.Email);
 
             var existingUser =
                 (await _genericRepositoryUser.ListAsync(emailSpec))
@@ -94,9 +96,8 @@ namespace ToDoApp.Application.Services
 
         public async Task<bool> RemoveUserAsync(string email)
         {
-            var spec = _factory.CreateUserBuilder()
-                .WithEmail(email)
-                .Build();
+            var spec = _factory.CreateBuilder<Users>()
+                .AddCriteria(x => x.Email == email);
 
             var user =
                 (await _genericRepositoryUser.ListAsync(spec))
@@ -117,9 +118,8 @@ namespace ToDoApp.Application.Services
             if (todo == null)
                 return false;
             
-            var spec = _factory.CreateCategoryBuilder()
-                .WithTitle(updateTodoDto.TitleCategory)
-                .Build();
+            var spec = _factory.CreateBuilder<Category>()
+                .AddCriteria(x => x.TitleOfCategory == updateTodoDto.TitleCategory);
 
             var resultspec = await _genericRepositoryCategory.ListAsync(spec);
             if (!resultspec.Any()) return false;

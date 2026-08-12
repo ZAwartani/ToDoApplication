@@ -11,7 +11,6 @@ namespace ToDoApp.Application.Services
         private readonly IGenericRepository<Category, int> _categoryRepository;
         private readonly IGenericRepository<ToDoItem, int> _todoRepository;
         private readonly ISpecificationBuilderFactory _factory;
-
         public CategoryService(
             IGenericRepository<Category, int> categoryRepository,
             IGenericRepository<ToDoItem, int> todoRepository,
@@ -19,7 +18,7 @@ namespace ToDoApp.Application.Services
         {
             _categoryRepository = categoryRepository;
             _todoRepository = todoRepository;
-            this._factory = factory;
+            _factory = factory;
         }
 
         public async Task<bool> CreateCategory(
@@ -27,9 +26,8 @@ namespace ToDoApp.Application.Services
             int userId)
         {
 
-            var spec = _factory.CreateCategoryBuilder()
-                .WithTitle(categoryDto.Title)
-                .Build();
+            var spec = _factory.CreateBuilder<Category>()
+                .AddCriteria(c => c.TitleOfCategory == categoryDto.Title);
 
             var result = await _categoryRepository.ListAsync(spec);
 
@@ -71,9 +69,8 @@ namespace ToDoApp.Application.Services
             if (category == null || category.Id == 1)
                 throw new Exception("We Have Problem To Remove It");
 
-            var spec = _factory.CreateTodoBuilder()
-                .WithCategoryId(id)
-                .Build();
+            var spec = _factory.CreateBuilder<ToDoItem>()
+                .AddCriteria(t => t.CategoryId == id);
 
             var todos = await _todoRepository.ListAsync(spec);
 
@@ -95,9 +92,8 @@ namespace ToDoApp.Application.Services
                 throw new Exception("We Have Problem To Remove It");
 
 
-            var spec = _factory.CreateTodoBuilder()
-                .WithCategoryId(id)
-                .Build();
+            var spec = _factory.CreateBuilder<ToDoItem>()
+                .AddCriteria(t => t.CategoryId == id);
 
             var todos = await _todoRepository.ListAsync(spec);
 
@@ -119,9 +115,9 @@ namespace ToDoApp.Application.Services
         public Task<IReadOnlyList<ListCategoryDto>> ListCategories()
         {
             var result = _categoryRepository.ListAsync(
-                _factory.CreateCategoryBuilder()
-                .Build()
+                _factory.CreateBuilder<Category>().ApplyOrderBy(c => c.TitleOfCategory)
             );
+
             var mapped = result.Result.Select(c =>
                 new ListCategoryDto(
                     c.Id,
@@ -134,10 +130,9 @@ namespace ToDoApp.Application.Services
         public async Task<IReadOnlyList<CategoryAndToDoItemDto>> ListCategoryWithTodo(int UserId)
         {
             var result = _categoryRepository.ListAsync(
-                _factory.CreateCategoryBuilder()
-                .ByUser(UserId)
-                .IncludeTodos()
-                .Build()
+                _factory.CreateBuilder<Category>()
+                .AddCriteria(x => x.Id == UserId)
+                .AddInclude(x => x.ToDoItems)
             );
 
             var mapped = (await result).Select(c =>

@@ -1,18 +1,10 @@
-﻿using ToDoApp.Application.Concreate.Builders;
+﻿using ToDoApp.Application.Concreate.Specification;
+using ToDoApp.Application.Interfaces.Specification;
+using ToDoApp.Domain.Interfaces;
 
 namespace ToDoApp.Application.Interfaces.Factory;
 
 public interface ISpecificationBuilderFactory
 {
-    TodoSpecificationBuilder CreateTodoBuilder();
-
-    CategorySpecificationBuilder CreateCategoryBuilder();
-
-    UserSpecificationBuilder CreateUserBuilder();
-
-    FileUploadSpecificationBuilder CreateFileUploadBuilder();
-
-    CodeOTPSpecificationBuilder CreateCodeOTPBuilder();
-
-    TokenSpecificationBuilder CreateTokenBuilder();
+    ISpecification<TEntity> CreateBuilder<TEntity>()  where TEntity : class;
 }

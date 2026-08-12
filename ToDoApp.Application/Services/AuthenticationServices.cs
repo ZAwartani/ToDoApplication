@@ -52,9 +52,8 @@ namespace ToDoApp.Application.Services
 
         public async Task<TokenRespone?> Login(LoginDto loginDto)
         {
-            var spec = _factory.CreateUserBuilder()
-                .WithEmail(loginDto.Email)
-                .Build();
+            var spec = _factory.CreateBuilder<Users>()
+                .AddCriteria(u => u.Email == loginDto.Email);
 
             var users = await _genericRepositoryUser.GetAsync(spec);
 
@@ -62,10 +61,9 @@ namespace ToDoApp.Application.Services
                 throw new Exception("Invalid email or password");
 
 
-            var tokenSpec = _factory.CreateTokenBuilder()
-                 .GetTokenByIdUser(users.Id)
-                 .Build();
-            
+            var tokenSpec = _factory.CreateBuilder<Token>()
+                 .AddCriteria(t => t.UserId == users.Id);
+
             var userToken = await _genericRepositoryToken.GetAsync(tokenSpec);
             if (userToken != null)
             {
@@ -79,18 +77,16 @@ namespace ToDoApp.Application.Services
 
         public async Task Logout(LogoutDto logoutDto)
         {
-            var spec = _factory.CreateUserBuilder()
-                .WithEmail(logoutDto.Email)
-                .Build();
+            var spec = _factory.CreateBuilder<Users>()
+                .AddCriteria(u => u.Email == logoutDto.Email);
 
             var user = (await _genericRepositoryUser.GetAsync(spec));
 
             if (user == null)
                 throw new Exception("User not found");
 
-            var tokenSpec = _factory.CreateTokenBuilder()
-                .GetTokenByIdUser(user.Id)
-                .Build();
+            var tokenSpec = _factory.CreateBuilder<Token>()
+                .AddCriteria(t => t.UserId == user.Id);
 
             var userToken = await _genericRepositoryToken.GetAsync(tokenSpec);
 
@@ -107,18 +103,16 @@ namespace ToDoApp.Application.Services
 
         public async Task<string?> ChangePassword(ForgetPasswordOTP forgetDto)
         {
-            var userSpec = _factory.CreateUserBuilder()
-                .WithEmail(forgetDto.email)
-                .Build();
+            var userSpec = _factory.CreateBuilder<Users>()
+                .AddCriteria(u => u.Email == forgetDto.email);
 
             var users = await _genericRepositoryUser.GetAsync(userSpec);
 
             if (users == null)
                 throw new Exception("User not found");
 
-            var otpSpec = _factory.CreateCodeOTPBuilder()
-                .GetOTPByUserId(users.Id)
-                .Build();
+            var otpSpec = _factory.CreateBuilder<CodeOTP>()
+                .AddCriteria(c => c.UserId == users.Id);
 
             var otpList = await _genericRepositoryCode.ListAsync(otpSpec);
             var otp = otpList.SingleOrDefault();
@@ -142,9 +136,8 @@ namespace ToDoApp.Application.Services
 
         public async Task<bool> SendCodeAsync(SendOTP sendOTPDto)
         {
-            var spec = _factory.CreateUserBuilder()
-                .WithEmail(sendOTPDto.email)
-                .Build();
+            var spec = _factory.CreateBuilder<Users>()
+                .AddCriteria(u => u.Email == sendOTPDto.email);
 
             var user = (await _genericRepositoryUser.GetAsync(spec));
 
@@ -162,11 +155,10 @@ namespace ToDoApp.Application.Services
                 Text = $"This is your verification code: {codeOTPToEmail}. It will expire in 5 minutes."
             };
 
-            await _genericRepositoryCode.RemoveRangeAsync(await _genericRepositoryCode.ListAsync(_factory.CreateCodeOTPBuilder().GetOTPByUserId(user.Id).Build()));
+            await _genericRepositoryCode.RemoveRangeAsync(await _genericRepositoryCode.ListAsync(_factory.CreateBuilder<CodeOTP>().AddCriteria(c => c.UserId == user.Id)));
             
-            var otpSpec = _factory.CreateCodeOTPBuilder()
-                .GetOTPByUserId(user.Id)
-                .Build();
+            var otpSpec = _factory.CreateBuilder<CodeOTP>()
+                .AddCriteria(c => c.UserId == user.Id);
 
             var existingOtp =
                 (await _genericRepositoryCode.GetAsync(otpSpec));
@@ -213,18 +205,16 @@ namespace ToDoApp.Application.Services
 
         public async Task<TokenRespone?> RefreshTokenAsync(RefreshToken refreshToken)
         {
-            var spec = _factory.CreateUserBuilder()
-                .WithEmail(refreshToken.Email)
-                .Build();
+            var spec = _factory.CreateBuilder<Users>()
+                .AddCriteria(u => u.Email == refreshToken.Email);
 
             var user = (await _genericRepositoryUser.GetAsync(spec));
 
             if (user == null)
                 throw new Exception("User not found");
 
-            var tokenSpec = _factory.CreateTokenBuilder()
-                .GetTokenByIdUser(user.Id)
-                .Build();
+            var tokenSpec = _factory.CreateBuilder<Token>()
+                .AddCriteria(t => t.UserId == user.Id);
 
             var userToken = (await _genericRepositoryToken.GetAsync(tokenSpec));
 
@@ -293,7 +283,5 @@ namespace ToDoApp.Application.Services
             rng.GetBytes(bytes);
             return Convert.ToBase64String(bytes);
         }
-
-        
     }
 }

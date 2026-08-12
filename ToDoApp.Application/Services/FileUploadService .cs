@@ -38,9 +38,8 @@ namespace ToDoApp.Application.Services
 
         public async Task<IReadOnlyList<ReturnToClientFileUploadDTO>> GetFilesByCategoryIdAsync(int categoryId)
         {
-            var specification = _factory.CreateFileUploadBuilder()
-                .GetFilesByCategoryId(categoryId)
-                .Build();
+            var specification = _factory.CreateBuilder<FilesUpload>()
+                .AddCriteria(f => f.CategoryId == categoryId);
 
             var files = await _repository.ListAsync(specification);
 
@@ -54,9 +53,8 @@ namespace ToDoApp.Application.Services
 
         public async Task<IReadOnlyList<ReturnToClientFileUploadDTO>> GetFilesByTodoItemIdAsync(int todoItemId)
         {
-            var specification = _factory.CreateFileUploadBuilder()
-                .GetFileByTodoId(todoItemId)
-                .Build();
+            var specification = _factory.CreateBuilder<FilesUpload>()
+                .AddCriteria(f => f.ToDoItemId == todoItemId);
 
             var files = await _repository.ListAsync(specification);
 
