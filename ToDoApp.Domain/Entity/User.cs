@@ -8,7 +8,7 @@ using ToDoApp.Domain.Interfaces;
 
 namespace ToDoApp.Domain.Entity
 {
-    public class Users : IEntity<int>
+    public class User : IEntity<int>
     {
         [Key]
         public int Id { get; set; } //
@@ -20,22 +20,26 @@ namespace ToDoApp.Domain.Entity
 
         [ForeignKey(nameof(Roles))]
         public enumUserRole RoleId { get; set; }
-        public Roles Roles { get; set; }
+        public Role Roles { get; set; }
         
         public ICollection<CodeOTP> CodeOTPs { get; set; }
         public ICollection<ToDoItem> ToDoItems{ get; set; }
 
-        public Users()
+        private User()
         {
             
         }
-        public Users(string UserName , string Email)
+        public User(string UserName , string Email)
         {
+            if (string.IsNullOrWhiteSpace(UserName))
+            {
+                throw new ArgumentException("They Have Error !!");
+            }
             this.UserName = UserName;
             this.Email = Email;
             this.RoleId = enumUserRole.User;
         }
-        public Users(string UserName , string Email , string Password , enumUserRole Roles )
+        public User(string UserName , string Email , string Password , enumUserRole Roles )
         {
             if (string.IsNullOrWhiteSpace(UserName))
             {

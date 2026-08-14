@@ -13,7 +13,7 @@ namespace ToDoApp.Application.DTOs
     EnumPriority Priority,
     DateTime CreatedAt,
     DateTime ExpireDate,
-    string TitleCategory,
+    int? CategoryId,
     EnumCompleteStatus CompleteStatus,
     EnumRecurring? Recurring
   );
@@ -24,7 +24,7 @@ namespace ToDoApp.Application.DTOs
         string Description,
         EnumPriority Priority,
         DateTime ExpireDate,
-        string? TitleCategory,
+        int? CategoryId,
         EnumRecurring? Recurring
     );
 
@@ -33,8 +33,8 @@ namespace ToDoApp.Application.DTOs
         string? Title,
         string? Description,
         EnumPriority? Priority,
-        DateTime? ExpireDate,
-        string? TitleCategory,
+        DateTime ExpireDate,
+        int? CategoryId,
         EnumRecurring? Recurring,
         EnumCompleteStatus? IsComplete
         
@@ -44,6 +44,7 @@ namespace ToDoApp.Application.DTOs
     public record MarkAsComplete(
         bool IsComplete
     );
+
     public record TodoItemDTO
     (
         int Id,

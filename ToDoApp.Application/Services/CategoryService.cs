@@ -8,137 +8,56 @@ namespace ToDoApp.Application.Services
 {
     public class CategoryService : ICategoryService
     {
-        private readonly IGenericRepository<Category, int> _categoryRepository;
-        private readonly IGenericRepository<ToDoItem, int> _todoRepository;
-        private readonly ISpecificationBuilderFactory _factory;
+        private readonly IGenericRepository<Category, int> _RepoCategory;
+        private readonly IGenericRepository<ToDoItem, int> _RepoTodo;
+        private readonly ISpecificationBuilderFactory _Factory;
         public CategoryService(
             IGenericRepository<Category, int> categoryRepository,
             IGenericRepository<ToDoItem, int> todoRepository,
             ISpecificationBuilderFactory factory)
         {
-            _categoryRepository = categoryRepository;
-            _todoRepository = todoRepository;
-            _factory = factory;
+            _RepoCategory = categoryRepository;
+            _RepoTodo = todoRepository;
+            _Factory = factory;
         }
 
-        public async Task<bool> CreateCategory(
-            ReturnCategory categoryDto,
+        public Task<bool> CascadeDeleteTodos(int id, int UserId , bool DeleteWithAllTodos)
+        {
+            if(DeleteWithAllTodos)
+            {
+                return DeleteWithAllTodo(id, UserId);
+            }
+            else
+            {
+                return DeleteWithoutTodo(id, UserId);
+            }
+        }
+
+        public async Task<bool> Create(
+            ReturnCategory CategoryDto,
             int userId)
         {
-
-            var spec = _factory.CreateBuilder<Category>()
-                .AddCriteria(c => c.TitleOfCategory == categoryDto.Title);
-
-            var result = await _categoryRepository.ListAsync(spec);
-
-            if (result.Any())
-                return false;
-
-
-            var category = new Category(
-                 categoryDto.Title
+            var NewCategory = new Category(
+                 CategoryDto.Title
             );
 
-            await _categoryRepository.AddAsync(category);
+            await _RepoCategory.AddAsync(NewCategory);
 
             return true;
         }
 
-        public async Task<bool> DeleteCategory(
-            int id,
-            int userId)
+        public async Task<IReadOnlyList<CategoryAndToDoItemDto>> GetDetails(int UserId , int CategoryId)
         {
-            var category = await _categoryRepository.GetByIdAsync(id);
+            var Spec = _Factory.CreateBuilder<Category>()
+                .AddCriteria(c => c.Id == CategoryId)
+                .AddInclude(c => c.ToDoItems);
 
+            var Result = await _RepoCategory.ListAsync(Spec);
 
-            if (category == null || category.Id == 1)
-                throw new Exception("We Have Problem To Remove It");
-
-            await _categoryRepository.DeleteAsync(id);
-
-            return true;
-        }
-
-        public async Task<bool> DeleteCategoryWithAllTodo(
-            int id,
-            int userId)
-        {
-
-            var category = await _categoryRepository.GetByIdAsync(id);
-
-            if (category == null || category.Id == 1)
-                throw new Exception("We Have Problem To Remove It");
-
-            var spec = _factory.CreateBuilder<ToDoItem>()
-                .AddCriteria(t => t.CategoryId == id);
-
-            var todos = await _todoRepository.ListAsync(spec);
-
-            if (todos.Any())
-            {
-                await _todoRepository.RemoveRangeAsync(todos);
-            }
-            await _categoryRepository.DeleteAsync(id);
-            return true;
-        }
-        public async Task<bool> DeleteCategoryWithoutTodo(
-            int id,
-            int userId)
-        {
-
-            var category = await _categoryRepository.GetByIdAsync(id);
-
-            if (category == null || category.Id == 1)
-                throw new Exception("We Have Problem To Remove It");
-
-
-            var spec = _factory.CreateBuilder<ToDoItem>()
-                .AddCriteria(t => t.CategoryId == id);
-
-            var todos = await _todoRepository.ListAsync(spec);
-
-            foreach (var todo in todos)
-            {
-                todo.CategoryId = 1;
-            }
-
-            if (todos.Any())
-            {
-                await _todoRepository.UpdateRangeAsync(todos);
-            }
-
-            await _categoryRepository.DeleteAsync(id);
-
-            return true;
-        }
-
-        public Task<IReadOnlyList<ListCategoryDto>> ListCategories()
-        {
-            var result = _categoryRepository.ListAsync(
-                _factory.CreateBuilder<Category>().ApplyOrderBy(c => c.TitleOfCategory)
-            );
-
-            var mapped = result.Result.Select(c =>
-                new ListCategoryDto(
-                    c.Id,
-                    c.TitleOfCategory
-                )
-            ).ToList();
-            return Task.FromResult<IReadOnlyList<ListCategoryDto>>(mapped);
-        }
-
-        public async Task<IReadOnlyList<CategoryAndToDoItemDto>> ListCategoryWithTodo(int UserId)
-        {
-            var result = _categoryRepository.ListAsync(
-                _factory.CreateBuilder<Category>()
-                .AddCriteria(x => x.Id == UserId)
-                .AddInclude(x => x.ToDoItems)
-            );
-
-            var mapped = (await result).Select(c =>
+            var Mapped = Result.Select(c =>
                 new CategoryAndToDoItemDto(
                     c.Id,
-                    c.TitleOfCategory,
+                    c.Title,
                     c.ToDoItems.Select(t => new TodoItemDTO(
                         t.Id,
                         t.Title,
@@ -150,27 +69,100 @@ namespace ToDoApp.Application.Services
                 )
             ).ToList();
 
-            return mapped;
+            return Mapped;
         }
 
-        public async Task<bool> UpdateCategory(
+        public async Task<IReadOnlyList<ListCategoryDto>> List()
+        {
+            var Result = await _RepoCategory.ListAsync(
+                _Factory.CreateBuilder<Category>().ApplyOrderBy(c => c.Title)
+            );
+
+            var Mapped = Result.Select(c =>
+                new ListCategoryDto(
+                    c.Id,
+                    c.Title
+                )
+            ).ToList();
+
+            return Mapped;
+        }
+
+
+        public async Task<bool> Update(
             ReturnCategory categoryDto,
             int id,
             int userId)
         {
 
-            var category = await _categoryRepository
+            var Category = await _RepoCategory
                 .GetByIdAsync(id);
-            if (category == null)
+            
+            if (Category == null)
                 return false;
 
-            category.UpdateTitle(
+            Category.UpdateTitle(
                 categoryDto.Title
             );
 
-            await _categoryRepository.UpdateAsync(category);
+            await _RepoCategory.UpdateAsync(Category);
 
             return true;
         }
+
+        private async Task<bool> DeleteWithAllTodo(
+            int Id,
+            int UserId)
+        {
+
+            var Category = await _RepoCategory.GetByIdAsync(Id);
+
+            if (Category == null || Category.Id == 1)
+                throw new Exception("We Have Problem To Remove It");
+
+            var spec = _Factory.CreateBuilder<ToDoItem>()
+                .AddCriteria(t => t.CategoryId == Id);
+
+            var todos = await _RepoTodo.ListAsync(spec);
+
+            if (todos.Any())
+            {
+                await _RepoTodo.RemoveRangeAsync(todos);
+            }
+            await _RepoCategory.DeleteAsync(Id);
+            return true;
+        }
+        private async Task<bool> DeleteWithoutTodo(
+            int Id,
+            int UserId)
+        {
+
+            var Category = await _RepoCategory.GetByIdAsync(Id);
+
+            if (Category == null || Category.Id == 1)
+                throw new Exception("We Have Problem To Remove It");
+
+
+            var Spec = _Factory.CreateBuilder<ToDoItem>()
+                .AddCriteria(t => t.CategoryId == Id);
+
+            var ToDos = await _RepoTodo.ListAsync(Spec);
+
+            foreach (var todo in ToDos)
+            {
+                todo.CategoryId = 1;
+            }
+
+            if (ToDos.Any())
+            {
+                await _RepoTodo.UpdateRangeAsync(ToDos);
+            }
+
+            await _RepoCategory.DeleteAsync(Id);
+
+            return true;
+        }
+
     }
+
 }

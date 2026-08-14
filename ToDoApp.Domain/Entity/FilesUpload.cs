@@ -11,7 +11,7 @@ namespace ToDoApp.Domain.Entity
     {
         [Key]
         public int Id { get; set; }
-        public string AddressNameFile { get; set; }
+        public string Path { get; set; }
 
         [ForeignKey(nameof(ToDoItem))]
         public int? ToDoItemId { get; set; }

@@ -13,29 +13,28 @@ namespace TodoApp.Presentation.Persistence
             
         }
 
-        DbSet<Users> Users { get; set; }
+        DbSet<User> Users { get; set; }
         DbSet<CodeOTP> codeOTPs { get; set; }
         DbSet<Token> tokens { get; set; }
-        DbSet<Roles> Roles { get; set; }
+        DbSet<Role> Roles { get; set; }
         DbSet<ToDoItem> ToDoItems { get; set; }
         DbSet<Category> Categories { get; set; }
         DbSet<FilesUpload> FilesUploads { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Users>().HasIndex(u => u.Email).IsUnique();
-            modelBuilder.Entity<Users>().HasIndex(u => u.UserName).IsUnique();
+            modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+            modelBuilder.Entity<User>().HasIndex(u => u.UserName).IsUnique();
 
-            modelBuilder.Entity<Roles>()
+            modelBuilder.Entity<Role>()
                .HasData(
-                        new Roles { Id = enumUserRole.UserAdmin, RoleName = "Admin" },
-                        new Roles { Id = enumUserRole.User, RoleName = "User" }
+                        new Role { Id = enumUserRole.UserAdmin, RoleName = "Admin" },
+                        new Role { Id = enumUserRole.User, RoleName = "User" }
                 );
 
-            modelBuilder.Entity<Category>().HasData(new { Id = 1 , TitleOfCategory = "UnCategorical"});
-            modelBuilder.Entity<FilesUpload>().HasIndex(x => x.AddressNameFile).IsUnique();
+            modelBuilder.Entity<Category>().HasData(new { Id = 1 , Title = "UnCategorical"});
+            modelBuilder.Entity<FilesUpload>().HasIndex(x => x.Path);
             base.OnModelCreating(modelBuilder);
-
 
         }
     }

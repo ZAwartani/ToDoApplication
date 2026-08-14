@@ -14,7 +14,7 @@ namespace ToDoApp.Application.Concreate.Specification
 
         public Expression<Func<TEntity, object>>? OrderBy { get; set; }
 
-        public Expression<Func<TEntity, object>>? OrderByDescending { get; set; }
+        public bool OrderByDescending { get; set; }
 
         public int Skip { get; set; }
 
@@ -38,21 +38,16 @@ namespace ToDoApp.Application.Concreate.Specification
             Criteria = criteria;
             return this;
         }
-        public BaseSpecificationBuilder<TEntity> AddInclude(Expression<Func<TEntity, object>> include)
+        public BaseSpecificationBuilder<TEntity> AddInclude(Expression<Func<TEntity, object>> include)  
         {
             Include.Add(include);
             return this;
         }
 
-        public BaseSpecificationBuilder<TEntity> ApplyOrderBy(Expression<Func<TEntity, object>> orderBy)
+        public BaseSpecificationBuilder<TEntity> ApplyOrderBy(Expression<Func<TEntity, object>> orderBy , bool orderByDescending = false)
         {
             this.OrderBy = orderBy;
-            return this;
-
-        }
-        public BaseSpecificationBuilder<TEntity> ApplyOrderByDesc(Expression<Func<TEntity , object>> orderByDesc)
-        {
-            this.OrderByDescending = orderByDesc;
+            this.OrderByDescending = orderByDescending;
             return this;
 
         }

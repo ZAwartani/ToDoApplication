@@ -26,7 +26,7 @@ namespace TodoApp.Presentation
             // Controllers
             // ============================
             builder.Services.AddControllers();
-
+            builder.Logging.AddConsole();
 
 
             // ============================
@@ -59,7 +59,6 @@ namespace TodoApp.Presentation
             builder.Services.AddScoped<IAuthentications, AuthenticationServices>();
             
             builder.Services.AddScoped<ICategoryService, CategoryService>();
-            builder.Services.AddScoped<IAdminService, AdminService>();
 
             builder.Services.AddScoped<ITodoService, ToDoService>();
             builder.Services.AddScoped<IFileUploadService, FileUploadService>();

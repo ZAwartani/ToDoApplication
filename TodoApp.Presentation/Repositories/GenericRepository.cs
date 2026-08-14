@@ -18,21 +18,18 @@ namespace TodoApp.Presentation.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(TKey Tkey)
+        public async Task<bool> DeleteAsync(TKey Tkey)
         {
             var entity = await GetByIdAsync(Tkey);
+            var IsSucssed = false;
             if(entity != null)
             {
                 _context.Set<TEntity>().Remove(entity);
-                await _context.SaveChangesAsync();
+                IsSucssed =  (await _context.SaveChangesAsync()) > 0;
             }
+            return IsSucssed;
         }
 
-        public async Task DeleteAsync(List<TEntity> entities)
-        {
-            _context.Set<TEntity>().RemoveRange(entities);
-            await _context.SaveChangesAsync();
-        }
 
         public async Task<IReadOnlyList<TEntity>> GetAllAsync()
         {
@@ -62,22 +59,23 @@ namespace TodoApp.Presentation.Repositories
                 .ToListAsync();
         }
 
-        public async Task RemoveRangeAsync(IReadOnlyList<TEntity> entity)
+        public async Task<bool> RemoveRangeAsync(IReadOnlyList<TEntity> entity)
         {
+
             _context.Set<TEntity>().RemoveRange(entity);
-            await _context.SaveChangesAsync();
+            return (await _context.SaveChangesAsync()) > 0;
         }
 
-        public async Task UpdateAsync(TEntity entity)
+        public async Task<bool> UpdateAsync(TEntity entity)
         {
             _context.Set<TEntity>().Update(entity);
-            await _context.SaveChangesAsync();
+            return (await _context.SaveChangesAsync()) > 0;
         }
 
-        public async Task UpdateRangeAsync(IReadOnlyList<TEntity> entity)
+        public async Task<bool> UpdateRangeAsync(IReadOnlyList<TEntity> entity)
         {
             _context.Set<TEntity>().UpdateRange(entity);
-            await _context.SaveChangesAsync();
+            return (await _context.SaveChangesAsync()) > 0;
         }
     }
 }

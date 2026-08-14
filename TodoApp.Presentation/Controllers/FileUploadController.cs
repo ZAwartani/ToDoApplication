@@ -60,4 +60,19 @@ public class FileUploadController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpGet("download/{fileId}")]
+    public async Task<IActionResult> Download(int fileId)
+    {
+        var file = await _fileUploadService.DownloadAsync(fileId);
+
+        if (file == null)
+            return NotFound("File not found");
+
+        return File(
+            file.Value.Content,
+            file.Value.ContentType,
+            file.Value.FileName
+        );
+    }
 }

@@ -6,46 +6,45 @@ using ToDoApp.Domain.Entity;
 
 namespace ToDoApp.Application.Services
 {
-    public class FileUploadService : IFileUploadService
+    public class FileUploadService(
+        IGenericRepository<FilesUpload, int> _Repository,
+        IFileStorageService _FileStorage,
+        ISpecificationBuilderFactory specificationBuilderFactory) : IFileUploadService
     {
-        private readonly IGenericRepository<FilesUpload, int> _repository;
-        private readonly IFileStorageService _fileStorage;
-        private readonly ISpecificationBuilderFactory _factory;
-
-        public FileUploadService(
-            IGenericRepository<FilesUpload, int> repository,
-            IFileStorageService fileStorage,
-            ISpecificationBuilderFactory specificationBuilderFactory)
-        {
-            _repository = repository;
-            _fileStorage = fileStorage;
-            _factory = specificationBuilderFactory;
-        }
-
         public async Task<bool> DeleteAsync(int fileId)
         {
-            var file = await _repository.GetByIdAsync(fileId);
+            var file = await _Repository.GetByIdAsync(fileId);
 
-            if (file == null)
+            if (file is null)
                 return false;
 
-            await _fileStorage.DeleteFileAsync(file.AddressNameFile);
+            await _FileStorage.DeleteFileAsync(file.Path);
 
-            await _repository.DeleteAsync(fileId);
+            await _Repository.DeleteAsync(fileId);
 
             return true;
         }
 
+        public async Task<(byte[] Content, string ContentType, string FileName)?> DownloadAsync(int fileId)
+        {
+            var file = await _Repository.GetByIdAsync(fileId);
+
+            if (file == null)
+                return null;
+
+            return await _FileStorage.DownloadFileAsync(file.Path);
+        }
+
         public async Task<IReadOnlyList<ReturnToClientFileUploadDTO>> GetFilesByCategoryIdAsync(int categoryId)
         {
-            var specification = _factory.CreateBuilder<FilesUpload>()
+            var specification = specificationBuilderFactory.CreateBuilder<FilesUpload>()
                 .AddCriteria(f => f.CategoryId == categoryId);
 
-            var files = await _repository.ListAsync(specification);
+            var files = await _Repository.ListAsync(specification);
 
             return files.Select(file => new ReturnToClientFileUploadDTO(
                 file.Id,
-                file.AddressNameFile,
+                file.Path,
                 file.ToDoItemId,
                 file.CategoryId
             )).ToList();
@@ -53,34 +52,40 @@ namespace ToDoApp.Application.Services
 
         public async Task<IReadOnlyList<ReturnToClientFileUploadDTO>> GetFilesByTodoItemIdAsync(int todoItemId)
         {
-            var specification = _factory.CreateBuilder<FilesUpload>()
+            var specification = specificationBuilderFactory.CreateBuilder<FilesUpload>()
                 .AddCriteria(f => f.ToDoItemId == todoItemId);
 
-            var files = await _repository.ListAsync(specification);
+            var files = await _Repository.ListAsync(specification);
 
 
             return files.Select(file => new ReturnToClientFileUploadDTO(
                file.Id,
-               file.AddressNameFile,
+               file.Path,
                file.ToDoItemId,
                file.CategoryId
            )).ToList();
         }
 
+        public Task<IReadOnlyList<string>> ListOfFiles()
+        {
+            var result = _FileStorage.ListFilesAsync();
+            return result;
+        }
+
         public async Task<FileUploadDTO?> UploadAsync(FileUploadDTO dto)
         {
-            var fileName = await _fileStorage.SaveFileAsync(dto.file);
+            var fileName = await _FileStorage.SaveFileAsync(dto.File);
 
             var file = new FilesUpload
             {
-                AddressNameFile = fileName,
+                Path = fileName,
                 ToDoItemId = dto.TodoId,
                 CategoryId = dto.CategoryId
             };
 
-            await _repository.AddAsync(file);
+            await _Repository.AddAsync(file);
 
-            return new FileUploadDTO(dto.file, file.ToDoItemId, file.CategoryId);
+            return new FileUploadDTO(dto.File, file.ToDoItemId, file.CategoryId);
         }
     }
 }

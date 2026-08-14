@@ -6,15 +6,19 @@ namespace ToDoApp.Application.Services
 {
     public class LocalFileStorageService : IFileStorageService
     {
-        private readonly IWebHostEnvironment _environment;
+        private readonly IWebHostEnvironment _Environment;
 
-        public LocalFileStorageService(IWebHostEnvironment environment)
+        private readonly IConfiguration _Configuration;
+        public LocalFileStorageService(IWebHostEnvironment environment , IConfiguration configuration)
         {
-            _environment = environment;
+            _Environment = environment;
+            _Configuration = configuration;
         }
 
         public async Task<string> SaveFileAsync(IFormFile file)
         {
+            var uploadPath = _Configuration["File:Upload"];
+
             if (file == null || file.Length == 0)
                 throw new Exception("File is empty");
 
@@ -24,8 +28,8 @@ namespace ToDoApp.Application.Services
                 throw new Exception("File size must be 2 MB or less");
 
             var folder = Path.Combine(
-                _environment.WebRootPath,
-                "uploads"
+                _Environment.WebRootPath,
+                uploadPath
             );
 
             if (!Directory.Exists(folder))
@@ -45,9 +49,11 @@ namespace ToDoApp.Application.Services
 
         public Task<bool> DeleteFileAsync(string fileName)
         {
+            var uploadPath = _Configuration["File:Upload"];
+
             var path = Path.Combine(
-                _environment.WebRootPath,
-                "uploads",
+                _Environment.WebRootPath,
+                uploadPath,
                 fileName
             );
 
@@ -55,6 +61,39 @@ namespace ToDoApp.Application.Services
                 File.Delete(path);
 
             return Task.FromResult(true);
+        }
+
+        public Task<IReadOnlyList<string>> ListFilesAsync()
+        {
+            var folder = Path.Combine(_Environment.WebRootPath, "uploads");
+
+            if (!Directory.Exists(folder))
+                return Task.FromResult((IReadOnlyList<string>)new List<string>());
+
+            var files = Directory.GetFiles(folder)
+                .Select(Path.GetFileName)
+                .ToList();
+
+            return Task.FromResult((IReadOnlyList<string>)files);
+        }
+
+        public async Task<(byte[] Content, string ContentType, string FileName)> DownloadFileAsync(string fileName)
+        {
+            var folder = Path.Combine(
+             _Environment.WebRootPath,
+             _Configuration["File:Upload"] ?? "uploads"
+              );
+
+            var filePath = Path.Combine(folder, fileName);
+
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException("File not found");
+
+            var content = await File.ReadAllBytesAsync(filePath);
+
+            var contentType = "application/octet-stream";
+
+            return (content, contentType, fileName);
         }
     }
 }

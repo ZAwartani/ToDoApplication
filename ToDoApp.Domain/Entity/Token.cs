@@ -12,21 +12,30 @@ namespace ToDoApp.Domain.Entity
         [Key]
         public int Id { get; set; }
         public string RefreshToken { get; set; }
+        public DateTime CreatedDate { get; set; }
         public DateTime RefreshTokenExpir { get; set; }
         public DateTime? RefreshTokenRevokedAt { get; set; }
 
-        [ForeignKey(nameof(Users))]
+        [ForeignKey(nameof(User))]
         public int UserId { get; set; }
-        public Users Users { get; set; }
+        public User User { get; set; }
 
-        public Token() { }
+        private Token() { }
+        public Token(int UserId , string RefreshToken , DateTime RefreshExpire , DateTime? RefreshTokenRevokedAt , DateTime CreatedDate) { 
+            this.UserId = UserId;
+            this.RefreshToken = RefreshToken;
+            this.RefreshTokenExpir = RefreshExpire;
+            this.RefreshTokenRevokedAt = RefreshTokenRevokedAt;
+            this.CreatedDate = CreatedDate;
+        }
         public Token(int UserId)
         {
             this.UserId = UserId;
         }
-        public Token(string RefreshToken , DateTime RefreshExpire , DateTime? RefreshTokenRevoked) 
+        public Token(string RefreshToken , DateTime CreatedDate, DateTime RefreshExpire , DateTime? RefreshTokenRevoked) 
         {
             this.RefreshToken = RefreshToken;
+            this.CreatedDate = CreatedDate;
             this.RefreshTokenExpir = RefreshExpire;
             this.RefreshTokenRevokedAt = RefreshTokenRevoked;
         }

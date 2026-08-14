@@ -11,16 +11,16 @@ namespace ToDoApp.Domain.Entity
     {
         [Key]
         public int Id { get; set; }
-        public string? Codeotp { get; set; }
-        public DateTime? CodeOTPExpir { get; set; }
+        public string? Code { get; set; }
+        public DateTime? CodeExpirDate { get; set; }
 
-        [ForeignKey(nameof(Users))]
+        [ForeignKey(nameof(User))]
         public int UserId { get; set; }
-        public Users Users { get; set; }
-        public CodeOTP(string codeotp, DateTime? codeOTPExpir, int userId)
+        public User User { get; set; }
+        public CodeOTP(string code, DateTime? codeExpirDate, int userId)
         {
-            Codeotp = codeotp;
-            CodeOTPExpir = codeOTPExpir;
+            Code = code;
+            CodeExpirDate = codeExpirDate;
             UserId = userId;
         }
     }

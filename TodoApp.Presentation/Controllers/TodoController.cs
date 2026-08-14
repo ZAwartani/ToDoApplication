@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using ToDoApp.Application.DTOs;
 using ToDoApp.Application.Interfaces;
+using ToDoApp.Domain.Enums;
 
 namespace TodoApp.Presentation.Controllers
 {
@@ -27,15 +28,28 @@ namespace TodoApp.Presentation.Controllers
             );
 
 
-            var result = await _todoService.CreateTodo(
+            var result = await _todoService.Create(
                 dto,
                 userId
             );
+            
+            BackgroundJob.Schedule(() => _todoService.SendEmailReminderAsync(userId, dto.Title, dto.ExpireDate), dto.ExpireDate.AddDays(-1));
 
-
-            if (!result)
-                return BadRequest("Category not found");
-
+            if(dto.Recurring != null)
+            {
+                if(dto.Recurring == EnumRecurring.Daily)
+                {
+                    RecurringJob.AddOrUpdate("daily-recurring", () => _todoService.CreateRecurringTodoAsync(dto , userId, EnumRecurring.Daily), Cron.Daily);
+                }
+                else if (dto.Recurring == EnumRecurring.Weekly)
+                {
+                    RecurringJob.AddOrUpdate("weekly-recurring", () => _todoService.CreateRecurringTodoAsync(dto, userId, EnumRecurring.Weekly), Cron.Weekly);
+                }
+                else if (dto.Recurring == EnumRecurring.Monthly)
+                {
+                    RecurringJob.AddOrUpdate("monthly-recurring", () => _todoService.CreateRecurringTodoAsync(dto, userId, EnumRecurring.Monthly), Cron.Monthly);
+                }
+            }    
             return Ok("Created Successfully");
         }
 
@@ -48,11 +62,14 @@ namespace TodoApp.Presentation.Controllers
             int userId = int.Parse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier)
             );
-            var result = await _todoService.UpdateTodo(
+            var result = await _todoService.Update(
                 dto,
                 id,
                 userId
             );
+
+            BackgroundJob.Schedule(() => _todoService.SendEmailReminderAsync(userId, dto.Title, dto.ExpireDate), dto.ExpireDate.AddDays(-1));
+
 
             if (!result)
                 return BadRequest("Todo not found or not yours");
@@ -62,7 +79,7 @@ namespace TodoApp.Presentation.Controllers
         }
 
 
-
+        
 
 
         [HttpDelete("{id}")]
@@ -72,7 +89,7 @@ namespace TodoApp.Presentation.Controllers
                 User.FindFirstValue(ClaimTypes.NameIdentifier)
             );
 
-            var result = await _todoService.DeleteTodo(
+            var result = await _todoService.Delete(
                 id,
                 userId
             );
@@ -93,7 +110,7 @@ namespace TodoApp.Presentation.Controllers
             int userId = int.Parse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier)
             );
-            var result = await _todoService.MarkTodoIsComplete(
+            var result = await _todoService.MarkAsComplete(
                 dto,
                 id,
                 userId
@@ -105,21 +122,15 @@ namespace TodoApp.Presentation.Controllers
             return Ok("Status Updated");
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetMyTodos()
+        [HttpGet("GetMyTodos/{FilterBy}/{Descending}")]
+        public async Task<IActionResult> GetMyTodos(string FilterBy, bool Descending)
         {
             int userId = int.Parse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier)
             );
 
-            var todos = await _todoService.ListTodoItemAsync(userId);
+            var todos = await _todoService.ListAsync(userId, FilterBy, Descending);
             return Ok(todos);
         }
     }
 }
-
-/*
- They Must Check the Expiredate when that create a todo item and if the expiredate is less than the current date they must return a bad request with a message "Expire date must be greater than current date"
- 
- 
- */

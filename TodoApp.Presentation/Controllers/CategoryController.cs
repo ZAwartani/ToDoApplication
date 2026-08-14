@@ -18,11 +18,9 @@ namespace TodoApp.Presentation.Controllers
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
-        private readonly ITodoService todoService;
-        public CategoryController(ICategoryService _categoryService , ITodoService service)
+        public CategoryController(ICategoryService _categoryService)
         {
             this._categoryService = _categoryService;
-            this.todoService = service;
         }
 
         [HttpGet("CheckClaims")]
@@ -41,7 +39,7 @@ namespace TodoApp.Presentation.Controllers
         public async Task<IActionResult> CreateCategory(ReturnCategory dto)
         {
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var result = await _categoryService.CreateCategory(dto, userId);
+            var result = await _categoryService.Create(dto, userId);
             if (result)
             {
                 return Ok("Created Sucessful");
@@ -61,7 +59,7 @@ namespace TodoApp.Presentation.Controllers
                 User.FindFirstValue(ClaimTypes.NameIdentifier)
             );
 
-            var result = await _categoryService.UpdateCategory
+            var result = await _categoryService.Update
                 (dto, id, userId);
             
             if (result)
@@ -76,14 +74,14 @@ namespace TodoApp.Presentation.Controllers
 
         [HttpDelete("DeleteCategory/{id}")]
         public async Task<IActionResult> Remove
-            (int id)
+            (int id , bool removeTodoItems)
         {
             int userId = int.Parse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier)
             );
 
-            var result = await _categoryService.DeleteCategory
-                (id, userId);
+            var result = await _categoryService.CascadeDeleteTodos
+                (id, userId , removeTodoItems);
             if (result)
             {
                 return Ok("Remove Category Sucessfull");
@@ -94,58 +92,23 @@ namespace TodoApp.Presentation.Controllers
             }   
         }
 
-        [HttpDelete("DeleteCategoryWithoutRemoveToDoItem/{id}")]
-        public async Task<IActionResult> RemoveCategoryWihtoutRemoveToDoItem
-            (int id) {
-            
-            int userId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-            );
-            var result = await _categoryService.DeleteCategoryWithoutTodo(id , userId);
-            if (result)
-            {
-                return Ok("Delete Category Without TodoItem");
-            }
-            else
-            {
-                return BadRequest();
-            }
-        }
-
-        [HttpDelete("DeleteCategoryWithRemoveTodoItem/{id}")]
-        public async Task<IActionResult> RemoveCategoryWithRemoveTodoItem
-            (int id)
-        {
-            int userId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-            );
-            var result = await _categoryService.DeleteCategoryWithAllTodo(id, userId);
-            if (result)
-            {
-                return Ok("Delete Category Without TodoItem");
-            }
-            else
-            {
-                return BadRequest();
-            }
-        }
-
         [HttpGet("GetMyCategoryWithTodo")]
-        public async Task<IActionResult> GetMyCategoryWithTodo()
+        public async Task<IActionResult> GetMyCategoryWithTodo(int CategoryId)
         {
             int userId = int.Parse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier)
             );
 
 
-            var result = await _categoryService.ListCategoryWithTodo(userId);
+            var result = await _categoryService.GetDetails(userId , CategoryId);
 
             return Ok(result);
         }
+
         [HttpGet("ListCategories")]
         public async Task<IActionResult> ListCategories()
         {
-            var result = await _categoryService.ListCategories();
+            var result = await _categoryService.List();
             return Ok(result);
         }
     }

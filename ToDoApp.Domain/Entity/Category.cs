@@ -12,26 +12,26 @@ namespace ToDoApp.Domain.Entity
         [Key]
         public int Id { get; set; }
 
-        public string TitleOfCategory { get; set; }
+        public string Title { get; set; }
 
         public ICollection<ToDoItem> ToDoItems { get; set; }
 
-        public Category()
+        private Category()
         {
 
         }
-        public Category(string TitleOfCategory) 
+        public Category(string Title   ) 
         {
-            if (string.IsNullOrWhiteSpace(TitleOfCategory))
+            if (string.IsNullOrWhiteSpace(Title))
             {
-                throw new ArgumentNullException(nameof(TitleOfCategory));
+                throw new ArgumentNullException(nameof(Title));
             }
-            this.TitleOfCategory = TitleOfCategory;
+            this.Title = Title;
         }
 
         public void UpdateTitle(string titleCategory)
         {
-            this.TitleOfCategory = titleCategory;
+            this.Title = titleCategory;
         }
     }
 }

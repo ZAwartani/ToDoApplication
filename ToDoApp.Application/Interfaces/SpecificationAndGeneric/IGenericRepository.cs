@@ -9,10 +9,10 @@ namespace ToDoApp.Application.Interfaces.Specification
     public interface IGenericRepository<TEntity , TKey> where TEntity : IEntity<TKey>
     {
         Task AddAsync(TEntity entity);
-        Task UpdateAsync(TEntity entity);
-        Task UpdateRangeAsync(IReadOnlyList<TEntity> entity);
-        Task RemoveRangeAsync(IReadOnlyList<TEntity> entity);
-        Task DeleteAsync(TKey Tkey);
+        Task<bool> UpdateAsync(TEntity entity);
+        Task<bool> UpdateRangeAsync(IReadOnlyList<TEntity> entity);
+        Task<bool> RemoveRangeAsync(IReadOnlyList<TEntity> entity);
+        Task<bool> DeleteAsync(TKey Tkey);
         Task<IReadOnlyList<TEntity>> GetAllAsync();
         Task<TEntity?> GetByIdAsync(TKey key);
         Task<TEntity> GetAsync(ISpecification<TEntity> specification);

@@ -23,11 +23,6 @@ namespace TodoApp.Presentation.Repositories
             {
                 Query = Query.OrderBy(specification.OrderBy);
             }
-            if(specification.OrderByDescending != null)
-            {
-                Query = Query.OrderByDescending(specification.OrderByDescending);
-            }
-
             return Query;
         }
     }

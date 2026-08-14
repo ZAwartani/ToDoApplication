@@ -9,12 +9,10 @@ namespace ToDoApp.Application.Interfaces
 {
     public interface ICategoryService
     {
-        public Task<bool> CreateCategory(ReturnCategory categoryDto , int UserId);
-        public Task<bool> UpdateCategory(ReturnCategory categoryDto , int id , int UserId);
-        public Task<bool> DeleteCategory(int id , int UserId);
-        public Task<bool> DeleteCategoryWithoutTodo(int Id , int UserId);
-        public Task<bool> DeleteCategoryWithAllTodo(int Id , int UserId);
-        public Task<IReadOnlyList<ListCategoryDto>> ListCategories();
-        public Task<IReadOnlyList<CategoryAndToDoItemDto>> ListCategoryWithTodo(int UserId);
+        public Task<bool> Create(ReturnCategory categoryDto , int UserId);
+        public Task<bool> Update(ReturnCategory categoryDto , int id , int UserId);
+        public Task<bool> CascadeDeleteTodos(int id, int UserId , bool DeleteWithAllTodos);
+        public Task<IReadOnlyList<ListCategoryDto>> List();
+        public Task<IReadOnlyList<CategoryAndToDoItemDto>> GetDetails(int UserId , int CategoryId);
     }
 }

@@ -12,8 +12,8 @@ using TodoApp.Presentation.Persistence;
 namespace TodoApp.Presentation.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260811174422_RestoreSeedData")]
-    partial class RestoreSeedData
+    [Migration("20260814093132_AfterEditCode")]
+    partial class AfterEditCode
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -33,7 +33,7 @@ namespace TodoApp.Presentation.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("TitleOfCategory")
+                    b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -45,7 +45,7 @@ namespace TodoApp.Presentation.Migrations
                         new
                         {
                             Id = 1,
-                            TitleOfCategory = "UnCategorical"
+                            Title = "UnCategorical"
                         });
                 });
 
@@ -57,11 +57,11 @@ namespace TodoApp.Presentation.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime?>("CodeOTPExpir")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Codeotp")
+                    b.Property<string>("Code")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CodeExpirDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -81,29 +81,28 @@ namespace TodoApp.Presentation.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AddressNameFile")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<int?>("CategoryId")
                         .HasColumnType("int");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int?>("ToDoItemId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AddressNameFile")
-                        .IsUnique();
-
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("Path");
 
                     b.HasIndex("ToDoItemId");
 
                     b.ToTable("FilesUploads");
                 });
 
-            modelBuilder.Entity("ToDoApp.Domain.Entity.Roles", b =>
+            modelBuilder.Entity("ToDoApp.Domain.Entity.Role", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("int");
@@ -183,6 +182,9 @@ namespace TodoApp.Presentation.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("RefreshToken")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -203,7 +205,7 @@ namespace TodoApp.Presentation.Migrations
                     b.ToTable("tokens");
                 });
 
-            modelBuilder.Entity("ToDoApp.Domain.Entity.Users", b =>
+            modelBuilder.Entity("ToDoApp.Domain.Entity.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -244,13 +246,13 @@ namespace TodoApp.Presentation.Migrations
 
             modelBuilder.Entity("ToDoApp.Domain.Entity.CodeOTP", b =>
                 {
-                    b.HasOne("ToDoApp.Domain.Entity.Users", "Users")
+                    b.HasOne("ToDoApp.Domain.Entity.User", "User")
                         .WithMany("CodeOTPs")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Users");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ToDoApp.Domain.Entity.FilesUpload", b =>
@@ -276,7 +278,7 @@ namespace TodoApp.Presentation.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ToDoApp.Domain.Entity.Users", "Users")
+                    b.HasOne("ToDoApp.Domain.Entity.User", "Users")
                         .WithMany("ToDoItems")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -289,18 +291,18 @@ namespace TodoApp.Presentation.Migrations
 
             modelBuilder.Entity("ToDoApp.Domain.Entity.Token", b =>
                 {
-                    b.HasOne("ToDoApp.Domain.Entity.Users", "Users")
+                    b.HasOne("ToDoApp.Domain.Entity.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Users");
+                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ToDoApp.Domain.Entity.Users", b =>
+            modelBuilder.Entity("ToDoApp.Domain.Entity.User", b =>
                 {
-                    b.HasOne("ToDoApp.Domain.Entity.Roles", "Roles")
+                    b.HasOne("ToDoApp.Domain.Entity.Role", "Roles")
                         .WithMany("Users")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -314,12 +316,12 @@ namespace TodoApp.Presentation.Migrations
                     b.Navigation("ToDoItems");
                 });
 
-            modelBuilder.Entity("ToDoApp.Domain.Entity.Roles", b =>
+            modelBuilder.Entity("ToDoApp.Domain.Entity.Role", b =>
                 {
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("ToDoApp.Domain.Entity.Users", b =>
+            modelBuilder.Entity("ToDoApp.Domain.Entity.User", b =>
                 {
                     b.Navigation("CodeOTPs");
 

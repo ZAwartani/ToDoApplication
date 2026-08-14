@@ -13,8 +13,10 @@ namespace ToDoApp.Application.Interfaces
         Task<string?> ChangePassword(ForgetPasswordOTP ForgetDto);
         Task<bool> SendCodeAsync(SendOTP sendOTPDto);
         Task<TokenRespone> RefreshTokenAsync(RefreshToken refreshToken);
-
-        
+        Task<IReadOnlyList<UserListDTO>?> ListOfUserForAdmin();
+        Task<bool> CreateAdminUser(RegisterNewUserDto NewUser);
+        Task<bool> RemoveUserAsync(string Email);
+        Task<bool> ChangePasswordUserByAdmin(AdminRestPasswordUserDto adminRestPasswordUserDto);
 
     }
 }

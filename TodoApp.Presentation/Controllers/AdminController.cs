@@ -10,13 +10,14 @@ namespace TodoApp.Presentation.Controllers
     [Authorize(Roles = "UserAdmin")]
     public class AdminController : ControllerBase
     {
-        private readonly IAdminService _adminService;
         private readonly ICategoryService _categoryService;
-
-        public AdminController(IAdminService adminService , ICategoryService categoryService)
+        private readonly IAuthentications _adminService;
+        private readonly ITodoService _todoService;
+        public AdminController( IAuthentications adminService , ICategoryService categoryService, ITodoService todoService)
         {
             _adminService = adminService;
             _categoryService = categoryService;
+            _todoService = todoService;
         }
 
 
@@ -35,7 +36,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpPost("create-user")]
         public async Task<IActionResult> CreateAdminUser(RegisterNewUserDto newUser)
         {
-            var result = await _adminService.AdminCanCreateAdminUser(newUser);
+            var result = await _adminService.CreateAdminUser(newUser);
 
             if (!result)
                 return BadRequest("Cannot create user");
@@ -71,7 +72,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpPut("update-todo/{id}")]
         public async Task<IActionResult> UpdateTodo(UpdateTodoDto dto, int id)
         {
-            var result = await _adminService.UpdateTodoForUser(dto, id);
+            var result = await _todoService.UpdateTodoForUser(dto, id);
 
             if (!result)
                 return BadRequest("Todo update failed");
@@ -79,10 +80,12 @@ namespace TodoApp.Presentation.Controllers
             return Ok("Todo updated successfully");
         }
 
-        [HttpGet("GetTodoWithCategory/{UserId}")]
-        public async Task<IActionResult> GetTodoWithCategory(int UserId)
+        [HttpGet]
+
+        [HttpGet("GetTodoWithCategory/{UserId}/{CategoryId}")]
+        public async Task<IActionResult> GetTodoWithCategory(int UserId , int CategoryId)
         {
-            var todo = await _categoryService.ListCategoryWithTodo(UserId);
+            var todo = await _categoryService.GetDetails(UserId, CategoryId);
 
             if (todo == null)
                 return NotFound("This User Dont Found Or Don't Have TodoItem");

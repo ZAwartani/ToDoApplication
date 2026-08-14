@@ -6,10 +6,10 @@ using ToDoApp.Domain.Enums;
 using ToDoApp.Domain.Interfaces;
 
 namespace ToDoApp.Domain.Entity;
-    public class Roles : IEntity<int>
+    public class Role : IEntity<int>
     {
         [Key]
         public enumUserRole Id { get; set; }
         public string RoleName { get; set; }
-        public ICollection<Users> Users { get; set; }
+        public ICollection<User> Users { get; set; }
     }
