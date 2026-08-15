@@ -14,19 +14,23 @@ namespace ToDoApp.Domain.Entity
 
         public string Title { get; set; }
 
+        [ForeignKey(nameof(User))]
+        public int UserId { get; set; }
+        public User User { get; set; }
         public ICollection<ToDoItem> ToDoItems { get; set; }
 
         private Category()
         {
 
         }
-        public Category(string Title   ) 
+        public Category(string Title , int UserId) 
         {
             if (string.IsNullOrWhiteSpace(Title))
             {
                 throw new ArgumentNullException(nameof(Title));
             }
             this.Title = Title;
+            this.UserId = UserId;
         }
 
         public void UpdateTitle(string titleCategory)

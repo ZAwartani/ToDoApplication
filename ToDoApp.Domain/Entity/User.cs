@@ -17,13 +17,12 @@ namespace ToDoApp.Domain.Entity
         public string Password { get; set; }//
         public DateTime CreatedAt { get; set; }//
 
-
         [ForeignKey(nameof(Roles))]
         public enumUserRole RoleId { get; set; }
         public Role Roles { get; set; }
-        
-        public ICollection<CodeOTP> CodeOTPs { get; set; }
+        public ICollection<CodeOTP> Codes { get; set; }
         public ICollection<ToDoItem> ToDoItems{ get; set; }
+        public ICollection<Category> Categories { get; set; }
 
         private User()
         {

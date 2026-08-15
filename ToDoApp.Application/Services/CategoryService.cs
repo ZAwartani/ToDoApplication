@@ -35,23 +35,33 @@ namespace ToDoApp.Application.Services
 
         public async Task<bool> Create(
             ReturnCategory CategoryDto,
-            int userId)
+            int UserId)
         {
-            var NewCategory = new Category(
-                 CategoryDto.Title
-            );
+            var Spec = _Factory.CreateBuilder<Category>()
+                .AddCriteria(x => x.UserId == UserId);
 
-            await _RepoCategory.AddAsync(NewCategory);
+            var Result = await _RepoCategory.GetAsync(Spec);
 
-            return true;
+            if (Result != null)
+            {
+                var NewCategory = new Category(
+                     CategoryDto.Title,
+                     CategoryDto.UserId
+                );
+                await _RepoCategory.AddAsync(NewCategory);
+
+                return true;
+            }
+            return false;
         }
 
         public async Task<IReadOnlyList<CategoryAndToDoItemDto>> GetDetails(int UserId , int CategoryId)
         {
             var Spec = _Factory.CreateBuilder<Category>()
+                .AddCriteria(c => c.UserId == UserId)
                 .AddCriteria(c => c.Id == CategoryId)
                 .AddInclude(c => c.ToDoItems);
-
+                
             var Result = await _RepoCategory.ListAsync(Spec);
 
             var Mapped = Result.Select(c =>
@@ -72,10 +82,12 @@ namespace ToDoApp.Application.Services
             return Mapped;
         }
 
-        public async Task<IReadOnlyList<ListCategoryDto>> List()
+        public async Task<IReadOnlyList<ListCategoryDto>> List(int UserId)
         {
             var Result = await _RepoCategory.ListAsync(
-                _Factory.CreateBuilder<Category>().ApplyOrderBy(c => c.Title)
+                _Factory.CreateBuilder<Category>()
+                .AddCriteria(c => c.UserId == UserId)
+                .ApplyOrderBy(c => c.Title)
             );
 
             var Mapped = Result.Select(c =>
@@ -121,6 +133,7 @@ namespace ToDoApp.Application.Services
                 throw new Exception("We Have Problem To Remove It");
 
             var spec = _Factory.CreateBuilder<ToDoItem>()
+                .AddCriteria (c => c.UserId == UserId)
                 .AddCriteria(t => t.CategoryId == Id);
 
             var todos = await _RepoTodo.ListAsync(spec);
@@ -144,6 +157,7 @@ namespace ToDoApp.Application.Services
 
 
             var Spec = _Factory.CreateBuilder<ToDoItem>()
+                .AddCriteria(t=>t.UserId == UserId)
                 .AddCriteria(t => t.CategoryId == Id);
 
             var ToDos = await _RepoTodo.ListAsync(Spec);

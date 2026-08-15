@@ -32,18 +32,17 @@ namespace TodoApp.Presentation.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.HasIndex("UserId", "Title")
+                        .IsUnique();
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Title = "UnCategorical"
-                        });
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("ToDoApp.Domain.Entity.CodeOTP", b =>
@@ -241,10 +240,21 @@ namespace TodoApp.Presentation.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("ToDoApp.Domain.Entity.Category", b =>
+                {
+                    b.HasOne("ToDoApp.Domain.Entity.User", "User")
+                        .WithMany("Categories")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ToDoApp.Domain.Entity.CodeOTP", b =>
                 {
                     b.HasOne("ToDoApp.Domain.Entity.User", "User")
-                        .WithMany("CodeOTPs")
+                        .WithMany("Codes")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -275,7 +285,7 @@ namespace TodoApp.Presentation.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ToDoApp.Domain.Entity.User", "Users")
+                    b.HasOne("ToDoApp.Domain.Entity.User", "User")
                         .WithMany("ToDoItems")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -283,7 +293,7 @@ namespace TodoApp.Presentation.Migrations
 
                     b.Navigation("Category");
 
-                    b.Navigation("Users");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ToDoApp.Domain.Entity.Token", b =>
@@ -320,7 +330,9 @@ namespace TodoApp.Presentation.Migrations
 
             modelBuilder.Entity("ToDoApp.Domain.Entity.User", b =>
                 {
-                    b.Navigation("CodeOTPs");
+                    b.Navigation("Categories");
+
+                    b.Navigation("Codes");
 
                     b.Navigation("ToDoItems");
                 });

@@ -33,7 +33,6 @@ namespace ToDoApp.Application.Services
         }
         public async Task<bool> UpdateTodoForUser(UpdateTodoDto UpdateTodoDto, int Id)
         {
-            var CategoryId = UpdateTodoDto.CategoryId ?? Constants.DefaultCategoryId;
 
             var ToDo = await _RepoTodo.GetByIdAsync(Id);
 
@@ -45,21 +44,21 @@ namespace ToDoApp.Application.Services
                 UpdateTodoDto.Description,
                 UpdateTodoDto.Priority,
                 UpdateTodoDto.ExpireDate,
-                CategoryId,
+                UpdateTodoDto.CategoryId,
                 UpdateTodoDto.Recurring
             );
 
             await _RepoTodo.UpdateAsync(ToDo);
             return true;
         }
-        public async Task<bool> Create(CreateTodoDto dto, int userId)
+        public async Task<bool> Create(CreateTodoDto dto, int UserId)
         {
-            var CategoryId = dto.CategoryId ?? Constants.DefaultCategoryId;
 
             var CategorySpec = _Factory.CreateBuilder<Category>()
-                .AddCriteria(x => x.Id == CategoryId);
- 
-                var Category = await _RepoCategory.GetAsync(CategorySpec);
+                .AddCriteria(x => x.UserId == UserId)
+                .AddCriteria(x => x.Id == dto.CategoryId);
+
+            var Category = await _RepoCategory.GetAsync(CategorySpec);
 
             if (Category == null)
                 throw new Exception("Category not found");
@@ -68,9 +67,9 @@ namespace ToDoApp.Application.Services
                 dto.Title,
                 dto.Description,
                 dto.Priority,
-                userId,
+                UserId,
                 dto.ExpireDate,
-                CategoryId,
+                dto.CategoryId,
                 dto.Recurring
             );
 
@@ -79,7 +78,7 @@ namespace ToDoApp.Application.Services
             return true;
         }
 
-        public async Task<IReadOnlyList<ReturnTodoItem>> ListAsync(int UserId,string? FilterBy,bool Descending)
+        public async Task<IReadOnlyList<ReturnTodoItem>> ListAsync(int UserId, string? FilterBy, bool Descending)
         {
             var Spec = _Factory.CreateBuilder<ToDoItem>()
                 .AddCriteria(x => x.UserId == UserId);
@@ -131,21 +130,19 @@ namespace ToDoApp.Application.Services
         public async Task<bool> Update(
             UpdateTodoDto dto,
             int Id,
-            int userId)
+            int UserId)
         {
             var ToDo = await _RepoTodo.GetByIdAsync(Id);
 
-            if ( ToDo == null || ToDo.UserId != userId)
+            if (ToDo == null || ToDo.UserId != UserId)
                 return false;
-
-            var CategoryId = dto.CategoryId ?? Constants.DefaultCategoryId;
 
             ToDo.Update(
                 dto.Title,
                 dto.Description,
                 dto.Priority,
                 dto.ExpireDate,
-                CategoryId,
+                dto.CategoryId,
                 dto.Recurring
             );
 
@@ -155,7 +152,7 @@ namespace ToDoApp.Application.Services
         }
         public async Task<bool> Delete(
             int Id,
-            int userId)
+            int UserId)
         {
 
             var ToDo = await _RepoTodo
@@ -165,7 +162,7 @@ namespace ToDoApp.Application.Services
             if (ToDo == null)
                 return false;
 
-            if (ToDo.UserId != userId)
+            if (ToDo.UserId != UserId)
                 return false;
 
             await _RepoTodo.DeleteAsync(Id);
@@ -175,7 +172,7 @@ namespace ToDoApp.Application.Services
         public async Task<bool> MarkAsComplete(
             MarkAsComplete dto,
             int Id,
-            int userId)
+            int UserId)
         {
 
             var ToDo = await _RepoTodo
@@ -185,7 +182,7 @@ namespace ToDoApp.Application.Services
             if (ToDo == null)
                 return false;
 
-            if (ToDo.UserId != userId)
+            if (ToDo.UserId != UserId)
                 return false;
 
             ToDo.UpdateStatus(dto.IsComplete);
@@ -236,56 +233,49 @@ namespace ToDoApp.Application.Services
             Console.WriteLine($"Sending email reminder to user {UserId} for todo '{Title}' expiring on {ExpireDate}");
         }
 
-        public async Task CreateRecurringTodoAsync(CreateTodoDto dto, int userId, EnumRecurring enumRecurring)
+        public async Task CreateRecurringTodoAsync(CreateTodoDto dto, int UserId, EnumRecurring EnumRecurring)
         {
 
-            var CategoryId = dto.CategoryId ?? Constants.DefaultCategoryId;
 
-            if (enumRecurring == EnumRecurring.Daily)
-                {
-                    var todo = new ToDoItem(
-                        dto.Title,
-                        dto.Description,
-                        dto.Priority,
-                        userId,
-                        dto.ExpireDate,
-                        CategoryId,
-                        EnumRecurring.Daily
-                    );
-                    _RepoTodo.AddAsync(todo);
-                }
-                else if (enumRecurring == EnumRecurring.Weekly)
-                {
-                    var todo = new ToDoItem(
-                        dto.Title,
-                        dto.Description,
-                        dto.Priority,
-                        userId,
-                        dto.ExpireDate,
-                        CategoryId,
-                        EnumRecurring.Weekly
-                    );
-                    _RepoTodo.AddAsync(todo);
-                }
-                else if (enumRecurring == EnumRecurring.Monthly)
-                {
-                    var todo = new ToDoItem(
-                        dto.Title,
-                        dto.Description,
-                        dto.Priority,
-                        userId,
-                        dto.ExpireDate,
-                        CategoryId,
-                        EnumRecurring.Monthly
-                    );
-                    _RepoTodo.AddAsync(todo);
-                }
+            if (EnumRecurring == EnumRecurring.Daily)
+            {
+                var todo = new ToDoItem(
+                    dto.Title,
+                    dto.Description,
+                    dto.Priority,
+                    UserId,
+                    dto.ExpireDate,
+                    dto.CategoryId,
+                    EnumRecurring.Daily
+                );
+                _RepoTodo.AddAsync(todo);
+            }
+            else if (EnumRecurring == EnumRecurring.Weekly)
+            {
+                var todo = new ToDoItem(
+                    dto.Title,
+                    dto.Description,
+                    dto.Priority,
+                    UserId,
+                    dto.ExpireDate,
+                    dto.CategoryId,
+                    EnumRecurring.Weekly
+                );
+                _RepoTodo.AddAsync(todo);
+            }
+            else if (EnumRecurring == EnumRecurring.Monthly)
+            {
+                var todo = new ToDoItem(
+                    dto.Title,
+                    dto.Description,
+                    dto.Priority,
+                    UserId,
+                    dto.ExpireDate,
+                    dto.CategoryId,
+                    EnumRecurring.Monthly
+                );
+                _RepoTodo.AddAsync(todo);
             }
         }
-     
-    internal static class Constants
-    {
-        public const int DefaultCategoryId = 1;
-
     }
 }

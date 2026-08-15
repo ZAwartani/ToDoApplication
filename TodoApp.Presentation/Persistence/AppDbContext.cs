@@ -23,19 +23,53 @@ namespace TodoApp.Presentation.Persistence
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
-            modelBuilder.Entity<User>().HasIndex(u => u.UserName).IsUnique();
-
-            modelBuilder.Entity<Role>()
-               .HasData(
-                        new Role { Id = enumUserRole.UserAdmin, RoleName = "Admin" },
-                        new Role { Id = enumUserRole.User, RoleName = "User" }
-                );
-
-            modelBuilder.Entity<Category>().HasData(new { Id = 1 , Title = "UnCategorical"});
-            modelBuilder.Entity<FilesUpload>().HasIndex(x => x.Path);
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<User>()
+                .HasIndex(x => x.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasIndex(x => x.UserName)
+                .IsUnique();
+
+            modelBuilder.Entity<Category>()
+                .HasOne(x => x.User)
+                .WithMany(x => x.Categories)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<ToDoItem>()
+                .HasOne(x => x.User)
+                .WithMany(x => x.ToDoItems)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ToDoItem>()
+                .HasOne(x => x.Category)
+                .WithMany(x => x.ToDoItems)
+                .HasForeignKey(x => x.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Category>()
+           .HasIndex(c => new { c.UserId, c.Title })
+           .IsUnique();
+
+            modelBuilder.Entity<Role>()
+                .HasData(
+                    new Role
+                    {
+                        Id = enumUserRole.UserAdmin,
+                        RoleName = "Admin"
+                    },
+                    new Role
+                    {
+                        Id = enumUserRole.User,
+                        RoleName = "User"
+                    });
+
+            modelBuilder.Entity<FilesUpload>()
+                .HasIndex(x => x.Path);
         }
     }
 }

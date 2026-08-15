@@ -20,9 +20,9 @@ namespace ToDoApp.Domain.Entity
         public int CategoryId { get; set; }
         public Category Category { get; set; }
 
-        [ForeignKey(nameof(Users))]
+        [ForeignKey(nameof(User))]
         public int UserId { get; set; }
-        public User Users { get; set; }
+        public User User { get; set; }
 
         public EnumCompleteStatus IsComplete { get; set; }
         public EnumRecurring? RecurringSetting { get; set; }

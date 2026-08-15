@@ -12,7 +12,7 @@ namespace ToDoApp.Application.Interfaces
         public Task<bool> Create(ReturnCategory categoryDto , int UserId);
         public Task<bool> Update(ReturnCategory categoryDto , int id , int UserId);
         public Task<bool> CascadeDeleteTodos(int id, int UserId , bool DeleteWithAllTodos);
-        public Task<IReadOnlyList<ListCategoryDto>> List();
+        public Task<IReadOnlyList<ListCategoryDto>> List(int UserId);
         public Task<IReadOnlyList<CategoryAndToDoItemDto>> GetDetails(int UserId , int CategoryId);
     }
 }
