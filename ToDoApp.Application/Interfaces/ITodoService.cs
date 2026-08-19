@@ -16,9 +16,9 @@ namespace ToDoApp.Application.Interfaces
         public Task<bool> Delete(int Id , int UserId);
         public Task<bool> MarkAsComplete(MarkAsComplete Dto , int Id , int UserId);
         public Task<IReadOnlyList<ReturnTodoItem>> ListAsync(int UserId , string? FilterBy , bool Descending);
-        public Task SendEmailReminderAsync(int userId, string title, DateTime? expireDate);
-        public Task CreateRecurringTodoAsync(CreateTodoDto dto ,int UesrId ,EnumRecurring enumRecurring);
-        Task<bool> UpdateTodoForUser(UpdateTodoDto updateTodoDto, int Id);
+        public Task SendEmailReminderAsync(int UserId, string Title, DateTime? ExpireDate);
+        public Task CreateRecurringTodoAsync(CreateTodoDto dto ,int UesrId ,EnumRecurring EnumRecurring);
+        Task<bool> UpdateTodoForUser(UpdateTodoDto UpdateTodoDto, int Id);
 
     }
 }

@@ -9,11 +9,11 @@ namespace ToDoApp.Application.Interfaces
     {
         Task<FileUploadDTO?> UploadAsync(FileUploadDTO dto);
         Task<IReadOnlyList<string>> ListOfFiles();
-        Task<IReadOnlyList<ReturnToClientFileUploadDTO>> GetFilesByTodoItemIdAsync(int todoItemId);
+        Task<IReadOnlyList<ReturnToClientFileUploadDTO>> GetFilesByTodoItemIdAsync(int ToDoItemId);
 
-        Task<IReadOnlyList<ReturnToClientFileUploadDTO>> GetFilesByCategoryIdAsync(int categoryId);
+        Task<IReadOnlyList<ReturnToClientFileUploadDTO>> GetFilesByCategoryIdAsync(int CategoryId);
 
-        Task<bool> DeleteAsync(int fileId);
-        Task<(byte[] Content, string ContentType, string FileName)?> DownloadAsync(int fileId);
+        Task<bool> DeleteAsync(int FileId);
+        Task<(byte[] Content, string ContentType, string FileName)?> DownloadAsync(int FileId);
     }
 }

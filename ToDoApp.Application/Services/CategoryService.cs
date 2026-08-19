@@ -21,15 +21,15 @@ namespace ToDoApp.Application.Services
             _Factory = factory;
         }
 
-        public Task<bool> CascadeDeleteTodos(int id, int UserId , bool DeleteWithAllTodos)
+        public Task<bool> CascadeDeleteTodos(int Id, int UserId , bool DeleteWithAllTodos)
         {
             if(DeleteWithAllTodos)
             {
-                return DeleteWithAllTodo(id, UserId);
+                return DeleteWithAllTodo(Id, UserId);
             }
             else
             {
-                return DeleteWithoutTodo(id, UserId);
+                return DeleteWithoutTodo(Id, UserId);
             }
         }
 
@@ -102,19 +102,19 @@ namespace ToDoApp.Application.Services
 
 
         public async Task<bool> Update(
-            ReturnCategory categoryDto,
-            int id,
-            int userId)
+            ReturnCategory CategoryDto,
+            int Id,
+            int UserId)
         {
 
             var Category = await _RepoCategory
-                .GetByIdAsync(id);
+                .GetByIdAsync(Id);
             
             if (Category == null)
                 return false;
 
             Category.UpdateTitle(
-                categoryDto.Title
+                CategoryDto.Title
             );
 
             await _RepoCategory.UpdateAsync(Category);
@@ -132,15 +132,15 @@ namespace ToDoApp.Application.Services
             if (Category == null || Category.Id == 1)
                 throw new Exception("We Have Problem To Remove It");
 
-            var spec = _Factory.CreateBuilder<ToDoItem>()
+            var Spec = _Factory.CreateBuilder<ToDoItem>()
                 .AddCriteria (c => c.UserId == UserId)
                 .AddCriteria(t => t.CategoryId == Id);
 
-            var todos = await _RepoTodo.ListAsync(spec);
+            var ToDos = await _RepoTodo.ListAsync(Spec);
 
-            if (todos.Any())
+            if (ToDos.Any())
             {
-                await _RepoTodo.RemoveRangeAsync(todos);
+                await _RepoTodo.RemoveRangeAsync(ToDos);
             }
             await _RepoCategory.DeleteAsync(Id);
             return true;
@@ -176,7 +176,5 @@ namespace ToDoApp.Application.Services
 
             return true;
         }
-
     }
-
 }

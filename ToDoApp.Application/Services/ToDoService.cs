@@ -51,12 +51,12 @@ namespace ToDoApp.Application.Services
             await _RepoTodo.UpdateAsync(ToDo);
             return true;
         }
-        public async Task<bool> Create(CreateTodoDto dto, int UserId)
+        public async Task<bool> Create(CreateTodoDto Dto, int UserId)
         {
 
             var CategorySpec = _Factory.CreateBuilder<Category>()
                 .AddCriteria(x => x.UserId == UserId)
-                .AddCriteria(x => x.Id == dto.CategoryId);
+                .AddCriteria(x => x.Id == Dto.CategoryId);
 
             var Category = await _RepoCategory.GetAsync(CategorySpec);
 
@@ -64,13 +64,13 @@ namespace ToDoApp.Application.Services
                 throw new Exception("Category not found");
 
             var todo = new ToDoItem(
-                dto.Title,
-                dto.Description,
-                dto.Priority,
+                Dto.Title,
+                Dto.Description,
+                Dto.Priority,
                 UserId,
-                dto.ExpireDate,
-                dto.CategoryId,
-                dto.Recurring
+                Dto.ExpireDate,
+                Dto.CategoryId,
+                Dto.Recurring
             );
 
             await _RepoTodo.AddAsync(todo);
@@ -107,12 +107,12 @@ namespace ToDoApp.Application.Services
                 }
             }
 
-            var result = await _RepoTodo.ListAsync(Spec);
+            var Result = await _RepoTodo.ListAsync(Spec);
 
-            if (result == null || result.Count == 0)
+            if (Result == null ||  Result.Count == 0)
                 throw new Exception("User doesn't have any TodoItems");
 
-            var mapped = result.Select(x => new ReturnTodoItem(
+            var Mapped = Result.Select(x => new ReturnTodoItem(
                 x.Id,
                 x.Title,
                 x.Description,
@@ -124,11 +124,11 @@ namespace ToDoApp.Application.Services
                 x.RecurringSetting
             )).ToList();
 
-            return mapped;
+            return Mapped;
         }
 
         public async Task<bool> Update(
-            UpdateTodoDto dto,
+            UpdateTodoDto Dto,
             int Id,
             int UserId)
         {
@@ -138,12 +138,12 @@ namespace ToDoApp.Application.Services
                 return false;
 
             ToDo.Update(
-                dto.Title,
-                dto.Description,
-                dto.Priority,
-                dto.ExpireDate,
-                dto.CategoryId,
-                dto.Recurring
+                Dto.Title,
+                Dto.Description,
+                Dto.Priority,
+                Dto.ExpireDate,
+                Dto.CategoryId,
+                Dto.Recurring
             );
 
 
@@ -170,7 +170,7 @@ namespace ToDoApp.Application.Services
         }
 
         public async Task<bool> MarkAsComplete(
-            MarkAsComplete dto,
+            MarkAsComplete Dto,
             int Id,
             int UserId)
         {
@@ -185,7 +185,7 @@ namespace ToDoApp.Application.Services
             if (ToDo.UserId != UserId)
                 return false;
 
-            ToDo.UpdateStatus(dto.IsComplete);
+            ToDo.UpdateStatus(Dto.IsComplete);
 
             await _RepoTodo.UpdateAsync(ToDo);
 
@@ -194,17 +194,17 @@ namespace ToDoApp.Application.Services
 
         public async Task SendEmailReminderAsync(int UserId, string Title, DateTime? ExpireDate)
         {
-            var spec = _Factory.CreateBuilder<User>()
+            var Spec = _Factory.CreateBuilder<User>()
                 .AddCriteria(u => u.Id == UserId);
 
-            var user = await _RepoUser.GetAsync(spec);
+            var User = await _RepoUser.GetAsync(Spec);
 
-            if (user == null)
+            if (User == null)
                 throw new Exception("User not found");
 
             MimeMessage message = new MimeMessage();
             message.From.Add(new MailboxAddress("TodoApp", "zakaryawork005@gmail.com"));
-            message.To.Add(new MailboxAddress("User", user.Email));
+            message.To.Add(new MailboxAddress("User", User.Email));
             message.Subject = "Todo Reminder";
 
             message.Body = new TextPart("plain")
@@ -233,48 +233,48 @@ namespace ToDoApp.Application.Services
             Console.WriteLine($"Sending email reminder to user {UserId} for todo '{Title}' expiring on {ExpireDate}");
         }
 
-        public async Task CreateRecurringTodoAsync(CreateTodoDto dto, int UserId, EnumRecurring EnumRecurring)
+        public async Task CreateRecurringTodoAsync(CreateTodoDto Dto, int UserId, EnumRecurring EnumRecurring)
         {
 
 
             if (EnumRecurring == EnumRecurring.Daily)
             {
-                var todo = new ToDoItem(
-                    dto.Title,
-                    dto.Description,
-                    dto.Priority,
+                var ToDo = new ToDoItem(
+                    Dto.Title,
+                    Dto.Description,
+                    Dto.Priority,
                     UserId,
-                    dto.ExpireDate,
-                    dto.CategoryId,
+                    Dto.ExpireDate,
+                    Dto.CategoryId,
                     EnumRecurring.Daily
                 );
-                _RepoTodo.AddAsync(todo);
+                _RepoTodo.AddAsync(ToDo);
             }
             else if (EnumRecurring == EnumRecurring.Weekly)
             {
-                var todo = new ToDoItem(
-                    dto.Title,
-                    dto.Description,
-                    dto.Priority,
+                var ToDo = new ToDoItem(
+                    Dto.Title,
+                    Dto.Description,
+                    Dto.Priority,
                     UserId,
-                    dto.ExpireDate,
-                    dto.CategoryId,
+                    Dto.ExpireDate,
+                    Dto.CategoryId,
                     EnumRecurring.Weekly
                 );
-                _RepoTodo.AddAsync(todo);
+                _RepoTodo.AddAsync(ToDo);
             }
             else if (EnumRecurring == EnumRecurring.Monthly)
             {
-                var todo = new ToDoItem(
-                    dto.Title,
-                    dto.Description,
-                    dto.Priority,
+                var ToDo = new ToDoItem(
+                    Dto.Title,
+                    Dto.Description,
+                    Dto.Priority,
                     UserId,
-                    dto.ExpireDate,
-                    dto.CategoryId,
+                    Dto.ExpireDate,
+                    Dto.CategoryId,
                     EnumRecurring.Monthly
                 );
-                _RepoTodo.AddAsync(todo);
+                _RepoTodo.AddAsync(ToDo);
             }
         }
     }

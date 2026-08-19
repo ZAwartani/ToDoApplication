@@ -272,14 +272,14 @@ namespace ToDoApp.Application.Services
             }
         }
 
-        public async Task<TokenRespone?> RefreshTokenAsync(RefreshToken refreshToken)
+        public async Task<TokenRespone?> RefreshTokenAsync(RefreshToken RefreshToken)
         {
-            var tokenSpec = _Factory.CreateBuilder<Token>()
-                .AddCriteria(t => t.User.Email == refreshToken.Email)
+            var TokenSpec = _Factory.CreateBuilder<Token>()
+                .AddCriteria(t => t.User.Email == RefreshToken.Email)
                 .AddInclude(t => t.User)
                 .ApplyOrderBy(t => t.CreatedDate, true);
 
-            var userToken = await _TokenRepo.GetAsync(tokenSpec);
+            var userToken = await _TokenRepo.GetAsync(TokenSpec);
 
             if (userToken == null)
                 throw new Exception("Invalid refresh token");
@@ -293,7 +293,7 @@ namespace ToDoApp.Application.Services
                 throw new Exception("Refresh token has expired");
 
             if (!BCrypt.Net.BCrypt.Verify(
-                    refreshToken.Refreshtoken,
+                    RefreshToken.Refreshtoken,
                     userToken.RefreshToken))
                 throw new Exception("Invalid refresh token");
 
@@ -305,57 +305,57 @@ namespace ToDoApp.Application.Services
             return await GenerateAndSaveTokensAsync(user);
         }
 
-        private async Task<TokenRespone> GenerateAndSaveTokensAsync(User user)
+        private async Task<TokenRespone> GenerateAndSaveTokensAsync(User User)
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
+            var TokenHandler = new JwtSecurityTokenHandler();
 
-            var jwtKey = _Configuration["JWT:Key"]
+            var JWTKey = _Configuration["JWT:Key"]
                 ?? throw new Exception("JWT key is not configured");
 
-            var jwtIssuer = _Configuration["JWT:Issuer"];
-            var jwtAudience = _Configuration["JWT:Audience"];
+            var JWTIssuer = _Configuration["JWT:Issuer"];
+            var JWTAudience = _Configuration["JWT:Audience"];
 
-            var claims = new[]
+            var Claims = new[]
             {
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim(ClaimTypes.Email, user.Email),
-        new Claim(ClaimTypes.Role, user.RoleId.ToString())
+        new Claim(ClaimTypes.NameIdentifier, User.Id.ToString()),
+        new Claim(ClaimTypes.Email, User.Email),
+        new Claim(ClaimTypes.Role, User.RoleId.ToString())
     };
 
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtKey));
+            var Key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(JWTKey));
 
-            var credentials = new SigningCredentials(
-                key,
+            var Credentials = new SigningCredentials(
+                Key,
                 SecurityAlgorithms.HmacSha256);
 
-            var jwt = new JwtSecurityToken(
-                issuer: jwtIssuer,
-                audience: jwtAudience,
-                claims: claims,
+            var JWT = new JwtSecurityToken(
+                issuer: JWTIssuer,
+                audience: JWTAudience,
+                claims: Claims,
                 expires: DateTime.UtcNow.AddMinutes(15),
-                signingCredentials: credentials);
+                signingCredentials: Credentials);
 
-            var accessToken = tokenHandler.WriteToken(jwt);
+            var AccessToken = TokenHandler.WriteToken(JWT);
 
-            var rawRefreshToken = GenerateRefreshToken();
+            var RawRefreshToken = GenerateRefreshToken();
 
-            var hashedRefreshToken = BCrypt.Net.BCrypt.HashPassword(rawRefreshToken);
+            var HashedRefreshToken = BCrypt.Net.BCrypt.HashPassword(RawRefreshToken);
 
-            var userToken = new Token
+            var UserToken = new Token
             (
-                user.Id,
-                hashedRefreshToken,
+                User.Id,
+                HashedRefreshToken,
                 DateTime.UtcNow.AddDays(7),
                 null,
                 DateTime.UtcNow
             );
 
-            await _TokenRepo.AddAsync(userToken);
+            await _TokenRepo.AddAsync(UserToken);
 
             return new TokenRespone(
-                accessToken,
-                rawRefreshToken);
+                AccessToken,
+                RawRefreshToken);
         }
 
         private string GenerateRefreshToken()

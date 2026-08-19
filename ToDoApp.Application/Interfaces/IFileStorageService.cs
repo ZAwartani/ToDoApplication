@@ -7,9 +7,9 @@ namespace ToDoApp.Application.Interfaces
 {
     public interface IFileStorageService
     {
-        Task<string> SaveFileAsync(IFormFile file);
+        Task<string> SaveFileAsync(IFormFile File);
         Task<IReadOnlyList<string>> ListFilesAsync();
-        Task<bool> DeleteFileAsync(string fileName);
-        Task<(byte[] Content, string ContentType, string FileName)> DownloadFileAsync(string fileName);
+        Task<bool> DeleteFileAsync(string FileName);
+        Task<(byte[] Content, string ContentType, string FileName)> DownloadFileAsync(string FileName);
     }
 }

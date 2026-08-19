@@ -7,16 +7,16 @@ namespace ToDoApp.Application.Interfaces
 {
     public interface IAuthentications
     {
-        Task RegisterNewUserAsync (RegisterNewUserDto registerDto);
-        Task<TokenRespone> Login(LoginDto loginDto);
-        Task Logout(LogoutDto logoutDto);
+        Task RegisterNewUserAsync (RegisterNewUserDto RegisterDto);
+        Task<TokenRespone> Login(LoginDto LoginDto);
+        Task Logout(LogoutDto LogoutDto);
         Task<string?> ChangePassword(ForgetPasswordOTP ForgetDto);
-        Task<bool> SendCodeAsync(SendOTP sendOTPDto);
-        Task<TokenRespone> RefreshTokenAsync(RefreshToken refreshToken);
+        Task<bool> SendCodeAsync(SendOTP SendOTPDto);
+        Task<TokenRespone> RefreshTokenAsync(RefreshToken RefreshToken);
         Task<IReadOnlyList<UserListDTO>?> ListOfUserForAdmin();
         Task<bool> CreateAdminUser(RegisterNewUserDto NewUser);
         Task<bool> RemoveUserAsync(string Email);
-        Task<bool> ChangePasswordUserByAdmin(AdminRestPasswordUserDto adminRestPasswordUserDto);
+        Task<bool> ChangePasswordUserByAdmin(AdminRestPasswordUserDto AdminRestPasswordUserDto);
 
     }
 }
