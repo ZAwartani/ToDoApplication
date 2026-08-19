@@ -10,14 +10,18 @@ namespace ToDoApp.Application.Services
     {
         private readonly IGenericRepository<Category, int> _RepoCategory;
         private readonly IGenericRepository<ToDoItem, int> _RepoTodo;
+
+        private readonly IGenericRepository<User, int> _RepoUser;
         private readonly ISpecificationBuilderFactory _Factory;
         public CategoryService(
-            IGenericRepository<Category, int> categoryRepository,
-            IGenericRepository<ToDoItem, int> todoRepository,
+            IGenericRepository<Category, int> CategoryRepository,
+            IGenericRepository<ToDoItem, int> TodoRepository,
+            IGenericRepository<User,int> UserRepository,
             ISpecificationBuilderFactory factory)
         {
-            _RepoCategory = categoryRepository;
-            _RepoTodo = todoRepository;
+            _RepoCategory = CategoryRepository;
+            _RepoTodo = TodoRepository;
+            _RepoUser = UserRepository;
             _Factory = factory;
         }
 
@@ -37,16 +41,16 @@ namespace ToDoApp.Application.Services
             ReturnCategory CategoryDto,
             int UserId)
         {
-            var Spec = _Factory.CreateBuilder<Category>()
-                .AddCriteria(x => x.UserId == UserId);
+            var Spec = _Factory.CreateBuilder<User>()
+                .AddCriteria(x => x.Id== UserId);
 
-            var Result = await _RepoCategory.GetAsync(Spec);
+            var Result = await _RepoUser.GetAsync(Spec);
 
             if (Result != null)
             {
                 var NewCategory = new Category(
                      CategoryDto.Title,
-                     CategoryDto.UserId
+                     UserId
                 );
                 await _RepoCategory.AddAsync(NewCategory);
 
@@ -106,9 +110,11 @@ namespace ToDoApp.Application.Services
             int Id,
             int UserId)
         {
+            var Spec = _Factory.CreateBuilder<Category>()
+                .AddCriteria(c => c.UserId == UserId);
 
             var Category = await _RepoCategory
-                .GetByIdAsync(Id);
+                .GetAsync(Spec);
             
             if (Category == null)
                 return false;
@@ -126,22 +132,15 @@ namespace ToDoApp.Application.Services
             int Id,
             int UserId)
         {
+            var SpecCategory = _Factory.CreateBuilder<Category>()
+                .AddCriteria(x => x.UserId == UserId)
+                .AddCriteria(x => x.Id == Id);
 
-            var Category = await _RepoCategory.GetByIdAsync(Id);
+            var Category = await _RepoCategory.GetAsync(SpecCategory);
 
-            if (Category == null || Category.Id == 1)
+            if (Category == null)
                 throw new Exception("We Have Problem To Remove It");
 
-            var Spec = _Factory.CreateBuilder<ToDoItem>()
-                .AddCriteria (c => c.UserId == UserId)
-                .AddCriteria(t => t.CategoryId == Id);
-
-            var ToDos = await _RepoTodo.ListAsync(Spec);
-
-            if (ToDos.Any())
-            {
-                await _RepoTodo.RemoveRangeAsync(ToDos);
-            }
             await _RepoCategory.DeleteAsync(Id);
             return true;
         }
@@ -149,15 +148,18 @@ namespace ToDoApp.Application.Services
             int Id,
             int UserId)
         {
+            var SpecCategory = _Factory.CreateBuilder<Category>()
+                 .AddCriteria(x => x.UserId == UserId)
+                 .AddCriteria(x => x.Id == Id);
+            
+            var Category = await _RepoCategory.GetAsync(SpecCategory);
 
-            var Category = await _RepoCategory.GetByIdAsync(Id);
-
-            if (Category == null || Category.Id == 1)
+            if (Category == null)
                 throw new Exception("We Have Problem To Remove It");
 
 
             var Spec = _Factory.CreateBuilder<ToDoItem>()
-                .AddCriteria(t=>t.UserId == UserId)
+                .AddCriteria(t => t.UserId == UserId)
                 .AddCriteria(t => t.CategoryId == Id);
 
             var ToDos = await _RepoTodo.ListAsync(Spec);

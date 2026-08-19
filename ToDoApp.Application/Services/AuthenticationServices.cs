@@ -153,7 +153,7 @@ namespace ToDoApp.Application.Services
                  .ApplyOrderBy(t => t.CreatedDate, true);
 
             var UserToken = await _TokenRepo.GetAsync(TokenSpec);
-            if (UserToken.RefreshTokenRevokedAt != null)
+            if (UserToken.RefreshTokenRevokedAt != null && UserToken != null)
             {
                 UserToken.RefreshTokenRevokedAt = DateTime.UtcNow;
                 await _TokenRepo.UpdateAsync(UserToken);
@@ -179,7 +179,7 @@ namespace ToDoApp.Application.Services
 
             var UserToken = await _TokenRepo.GetAsync(TokenSpec);
 
-            if (!BCrypt.Net.BCrypt.Verify(LogoutDto.RefreshToken, UserToken.RefreshToken))
+            if (!BCrypt.Net.BCrypt.Verify(LogoutDto.RefreshToken, UserToken.RefreshToken) && UserToken != null)
                 throw new Exception("The refresh token is invalid");
 
             UserToken.RefreshTokenRevokedAt = DateTime.UtcNow;
