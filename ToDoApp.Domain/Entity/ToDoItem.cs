@@ -1,0 +1,98 @@
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using ToDoApp.Domain.Enums;
+using ToDoApp.Domain.Interfaces;
+
+namespace ToDoApp.Domain.Entity
+{
+    public class ToDoItem : IEntity<int>
+    {
+        [Key]
+        public int Id { get; set; }
+
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public EnumPriority Priority { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime ExpireDate { get; set; }
+        public string? BackGroundJobId { get; set;}
+
+        [ForeignKey(nameof(Category))]
+        public int? CategoryId { get; set; }
+        public Category Category { get; set; }
+
+        [ForeignKey(nameof(User))]
+        public int UserId { get; set; }
+        public User User { get; set; }
+
+        public EnumCompleteStatus IsComplete { get; set; }
+        public EnumRecurring? RecurringSetting { get; set; }
+
+        private ToDoItem()
+        {
+        }
+
+        public ToDoItem(
+            string title,
+            string description,
+            EnumPriority priority,
+            int userId,
+            DateTime expireDate,
+            int? categoryId,
+            EnumRecurring? recurringSetting,
+            string? backgroundjobid)
+        {
+            if (string.IsNullOrWhiteSpace(title))
+                throw new ArgumentException("The Title Is Empty");
+
+            Title = title;
+            Description = description;
+            Priority = priority;
+            UserId = userId;
+            CreatedAt = DateTime.UtcNow;
+            ExpireDate = expireDate;
+            CategoryId = categoryId;
+            RecurringSetting = recurringSetting;
+            IsComplete = EnumCompleteStatus.NotComplete;
+            backgroundjobid = BackGroundJobId;
+        }
+
+        public void Update(
+            string? title,
+            string? description,
+            EnumPriority? priority,
+            DateTime? expireDate,
+            int? categoryId,
+            EnumRecurring? recurring,
+            string? backgroundjobid)
+        {
+            if (!string.IsNullOrWhiteSpace(title))
+                Title = title;
+
+            if (!string.IsNullOrWhiteSpace(description))
+                Description = description;
+
+            if (priority.HasValue)
+                Priority = priority.Value;
+
+            if (expireDate.HasValue)
+                ExpireDate = expireDate.Value;
+
+            CategoryId = categoryId;
+
+            if (recurring.HasValue)
+                RecurringSetting = recurring.Value;
+
+            if (backgroundjobid != null)
+                BackGroundJobId = backgroundjobid;
+        }
+
+        public void UpdateStatus(bool isComplete)
+        {
+            IsComplete = isComplete
+                ? EnumCompleteStatus.Complete
+                : EnumCompleteStatus.NotComplete;
+        }
+    }
+}

@@ -1,0 +1,316 @@
+﻿using MailKit.Net.Smtp;
+using MimeKit;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using ToDoApp.Application.DTOs;
+using ToDoApp.Application.Interfaces;
+using ToDoApp.Application.Interfaces.Factory;
+using ToDoApp.Application.Interfaces.Specification;
+using ToDoApp.Domain.Entity;
+using ToDoApp.Domain.Enums;
+
+namespace ToDoApp.Application.Services
+{
+    public class ToDoService : ITodoService
+    {
+        private readonly IGenericRepository<ToDoItem, int> _RepoTodo;
+        private readonly IGenericRepository<Category, int> _RepoCategory;
+        private readonly IGenericRepository<User, int> _RepoUser;
+        private readonly ISpecificationBuilderFactory _Factory;
+
+
+        public ToDoService(
+            IGenericRepository<ToDoItem, int> genericRepositoryTodoItem,
+            IGenericRepository<Category, int> genericRepositoryCategory,
+            IGenericRepository<User, int> genericRepositoryUser,
+            ISpecificationBuilderFactory factory
+            )
+        {
+            this._RepoTodo = genericRepositoryTodoItem;
+            this._RepoCategory = genericRepositoryCategory;
+            this._Factory = factory;
+            this._RepoUser = genericRepositoryUser;
+        }
+        public async Task<bool> UpdateTodoForUser(UpdateTodoDto UpdateTodoDto, int Id)
+        {
+
+            var ToDo = await _RepoTodo.GetByIdAsync(Id);
+
+            if (ToDo == null)
+                return false;
+
+            ToDo.Update(
+                UpdateTodoDto.Title,
+                UpdateTodoDto.Description,
+                UpdateTodoDto.Priority,
+                UpdateTodoDto.ExpireDate,
+                UpdateTodoDto.CategoryId,
+                UpdateTodoDto.Recurring,
+                UpdateTodoDto.BackGroundJobId
+            );
+
+            await _RepoTodo.UpdateAsync(ToDo);
+            return true;
+        }
+        public async Task<bool> Create(CreateTodoDto Dto, int UserId , string? BackGroundJobId)
+        {
+            object Todo;
+            if(Dto.CategoryId == null)
+            {
+                Todo = new ToDoItem(
+                    Dto.Title,
+                    Dto.Description,
+                    Dto.Priority,
+                    UserId,
+                    Dto.ExpireDate,
+                    null,
+                    Dto.Recurring,
+                    BackGroundJobId
+                );
+            }
+
+            var CategorySpec = _Factory.CreateBuilder<Category>()
+                .AddCriteria(x => x.UserId == UserId)
+                .AddCriteria(x => x.Id == Dto.CategoryId);
+
+            var Category = await _RepoCategory.GetAsync(CategorySpec);
+
+            var todo = new ToDoItem(
+                   Dto.Title,
+                   Dto.Description,
+                   Dto.Priority,
+                   UserId,
+                   Dto.ExpireDate,
+                   Dto.CategoryId,
+                   Dto.Recurring,
+                   BackGroundJobId
+
+            );
+            await _RepoTodo.AddAsync(todo);
+
+            return true;
+        } // checked
+
+        public async Task<IReadOnlyList<ReturnTodoItem>> ListAsync(int UserId, string? FilterBy, bool Descending)
+        {
+            var Spec = _Factory.CreateBuilder<ToDoItem>()
+                .AddCriteria(x => x.UserId == UserId);
+
+            if (!string.IsNullOrWhiteSpace(FilterBy))
+            {
+                if (FilterBy.Equals("priority", StringComparison.OrdinalIgnoreCase))
+                {
+                    Spec.ApplyOrderBy(x => x.Priority, Descending);
+                }
+                else if (FilterBy.Equals("expiredate", StringComparison.OrdinalIgnoreCase))
+                {
+                    Spec.ApplyOrderBy(x => x.ExpireDate, Descending);
+                }
+                else if (FilterBy.Equals("category", StringComparison.OrdinalIgnoreCase))
+                {
+                    Spec.ApplyOrderBy(x => x.CategoryId, Descending);
+                }
+                else if (FilterBy.Equals("createdat", StringComparison.OrdinalIgnoreCase))
+                {
+                    Spec.ApplyOrderBy(x => x.CreatedAt, Descending);
+                }
+                else if (FilterBy.Equals("iscomplete", StringComparison.OrdinalIgnoreCase))
+                {
+                    Spec.ApplyOrderBy(x => x.IsComplete, Descending);
+                }
+            }
+
+            var Result = await _RepoTodo.ListAsync(Spec);
+
+            if (Result == null ||  Result.Count == 0)
+                throw new Exception("User doesn't have any TodoItems");
+
+            var Mapped = Result.Select(x => new ReturnTodoItem(
+                x.Id,
+                x.Title,
+                x.Description,
+                x.Priority,
+                x.CreatedAt,
+                x.ExpireDate,
+                x.CategoryId,
+                x.IsComplete,
+                x.RecurringSetting
+            )).ToList();
+
+            return Mapped;
+        }
+
+        public async Task<bool> Update(
+            UpdateTodoDto Dto,
+            int Id,
+            int UserId,
+            string? backGroundJobId)
+        {
+            var ToDo = await _RepoTodo.GetByIdAsync(Id);
+
+            if (ToDo == null || ToDo.UserId != UserId)
+                return false;
+
+            ToDo.Update(
+                Dto.Title,
+                Dto.Description,
+                Dto.Priority,
+                Dto.ExpireDate,
+                Dto.CategoryId,
+                Dto.Recurring,
+                backGroundJobId
+            );
+            await _RepoTodo.UpdateAsync(ToDo);
+            return true;
+        } // Checked
+
+        public async Task<bool> Delete(
+            int Id,
+            int UserId)
+        {
+
+            var ToDo = await _RepoTodo
+                .GetByIdAsync(Id);
+
+
+            if (ToDo == null)
+                return false;
+
+            if (ToDo.UserId != UserId)
+                return false;
+
+            await _RepoTodo.DeleteAsync(Id);
+            return true;
+        }
+
+        public async Task<bool> MarkAsComplete(
+            MarkAsComplete Dto,
+            int Id,
+            int UserId)
+        {
+
+            var ToDo = await _RepoTodo
+                .GetByIdAsync(Id);
+
+
+            if (ToDo == null)
+                return false;
+
+            if (ToDo.UserId != UserId)
+                return false;
+
+            ToDo.UpdateStatus(Dto.IsComplete);
+
+            await _RepoTodo.UpdateAsync(ToDo);
+
+            return true;
+        }
+
+        public async Task SendEmailReminderAsync(int UserId, string Title, DateTime? ExpireDate)
+        {
+            var Spec = _Factory.CreateBuilder<User>()
+                .AddCriteria(u => u.Id == UserId);
+
+            var User = await _RepoUser.GetAsync(Spec);
+
+            if (User == null)
+                throw new Exception("User not found");
+
+            MimeMessage message = new MimeMessage();
+            message.From.Add(new MailboxAddress("TodoApp", "zakaryawork005@gmail.com"));
+            message.To.Add(new MailboxAddress("User", User.Email));
+            message.Subject = "Todo Reminder";
+
+            message.Body = new TextPart("plain")
+            {
+                Text = $"The Todo Item : {Title}. Is Expire Tomorrow {ExpireDate?.Date} "
+            };
+
+
+            using (var client = new SmtpClient())
+            {
+                try
+                {
+                    await client.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
+                    await client.AuthenticateAsync("zakaryawork005@gmail.com", "qkukqdjeaqbxkjod");
+                    await client.SendAsync(message);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"حدث خطأ أثناء الإرسال: {ex.Message}");
+                }
+                finally
+                {
+                    await client.DisconnectAsync(true);
+                }
+            }
+            Console.WriteLine($"Sending email reminder to user {UserId} for todo '{Title}' expiring on {ExpireDate}");
+        }
+
+        public async Task CreateRecurringTodoAsync(CreateTodoDto Dto, int UserId , EnumRecurring EnumRecurring)
+        {
+            if (EnumRecurring == EnumRecurring.Daily)
+            {
+                var ToDo = new ToDoItem(
+                    Dto.Title,
+                    Dto.Description,
+                    Dto.Priority,
+                    UserId,
+                    Dto.ExpireDate,
+                    Dto.CategoryId,
+                    EnumRecurring.Daily,
+                    Dto.BackGroundJobId
+                    
+                );
+                _RepoTodo.AddAsync(ToDo);
+            }
+            else if (EnumRecurring == EnumRecurring.Weekly)
+            {
+                var ToDo = new ToDoItem(
+                    Dto.Title,
+                    Dto.Description,
+                    Dto.Priority,
+                    UserId,
+                    Dto.ExpireDate,
+                    Dto.CategoryId,
+                    EnumRecurring.Weekly,
+                    Dto.BackGroundJobId
+                );
+                _RepoTodo.AddAsync(ToDo);
+            }
+            else if (EnumRecurring == EnumRecurring.Monthly)
+            {
+                var ToDo = new ToDoItem(
+                    Dto.Title,
+                    Dto.Description,
+                    Dto.Priority,
+                    UserId,
+                    Dto.ExpireDate,
+                    Dto.CategoryId,
+                    EnumRecurring.Monthly,
+                    Dto.BackGroundJobId
+                );
+                _RepoTodo.AddAsync(ToDo);
+            }
+        }
+
+        public async Task<string> GetTitleOfJob(int Id)
+        {
+            var Spec =  _Factory.CreateBuilder<ToDoItem>()
+                .AddCriteria(x => x.Id == Id);
+
+            var ResultFromQuery = await _RepoTodo.GetAsync(Spec);
+            
+            if(ResultFromQuery == null)
+            {
+                throw new Exception();
+            }
+            var TitleOfBackgroundJob = ResultFromQuery.BackGroundJobId;
+            if (TitleOfBackgroundJob == null)
+            {
+                return null;
+            }
+            return TitleOfBackgroundJob;
+        }
+    }
+}
