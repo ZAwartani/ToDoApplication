@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Org.BouncyCastle.X509;
+using System.Security.Claims;
 using ToDoApp.Application.DTOs;
 using ToDoApp.Application.Interfaces;
+using ToDoApp.Domain.Entity;
 
 namespace TodoApp.Presentation.Controllers
 {
@@ -10,21 +13,23 @@ namespace TodoApp.Presentation.Controllers
     [Authorize(Roles = "UserAdmin")]
     public class AdminController : ControllerBase
     {
-        private readonly ICategoryService _categoryService;
-        private readonly IAuthentications _adminService;
-        private readonly ITodoService _todoService;
-        public AdminController( IAuthentications adminService , ICategoryService categoryService, ITodoService todoService)
+        private readonly ICategoryService _CategoryService;
+        private readonly IAuthentications _AdminService;
+        private readonly ITodoService _TodoService;
+        private readonly ITodoJobs _TodoJobs;
+        public AdminController( ITodoJobs todoJobs,IAuthentications adminService , ICategoryService categoryService, ITodoService todoService)
         {
-            _adminService = adminService;
-            _categoryService = categoryService;
-            _todoService = todoService;
+            _TodoJobs = todoJobs;
+            _AdminService = adminService;
+            _CategoryService = categoryService;
+            _TodoService = todoService;
         }
 
 
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers()
         {
-            var users = await _adminService.ListOfUserForAdmin();
+            var users = await _AdminService.ListOfUserForAdmin();
 
             if (users == null)
                 return NotFound();
@@ -36,7 +41,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpPost("create-user")]
         public async Task<IActionResult> CreateAdminUser(RegisterNewUserDto newUser)
         {
-            var result = await _adminService.CreateAdminUser(newUser);
+            var result = await _AdminService.CreateAdminUser(newUser);
 
             if (!result)
                 return BadRequest("Cannot create user");
@@ -48,7 +53,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpDelete("remove-user/{email}")]
         public async Task<IActionResult> RemoveUser(string email)
         {
-            var result = await _adminService.RemoveUserAsync(email);
+            var result = await _AdminService.RemoveUserAsync(email);
 
             if (!result)
                 return NotFound("User not found");
@@ -60,7 +65,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpPut("change-password")]
         public async Task<IActionResult> ChangePassword(AdminRestPasswordUserDto dto)
         {
-            var result = await _adminService.ChangePasswordUserByAdmin(dto);
+            var result = await _AdminService.ChangePasswordUserByAdmin(dto);
 
             if (!result)
                 return BadRequest("Password change failed");
@@ -72,7 +77,8 @@ namespace TodoApp.Presentation.Controllers
         [HttpPut("update-todo/{id}")]
         public async Task<IActionResult> UpdateTodo(UpdateTodoDto dto, int id)
         {
-            var result = await _todoService.UpdateTodoForUser(dto, id);
+
+            var result = await _TodoService.UpdateTodoForUser(dto, id);
 
             if (!result)
                 return BadRequest("Todo update failed");
@@ -85,7 +91,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpGet("GetTodoWithCategory/{UserId}/{CategoryId}")]
         public async Task<IActionResult> GetTodoWithCategory(int UserId , int CategoryId)
         {
-            var todo = await _categoryService.GetDetails(UserId, CategoryId);
+            var todo = await _CategoryService.GetDetails(UserId, CategoryId);
 
             if (todo == null)
                 return NotFound("This User Dont Found Or Don't Have TodoItem");

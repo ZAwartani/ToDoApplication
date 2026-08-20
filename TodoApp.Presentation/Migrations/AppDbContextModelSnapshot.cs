@@ -132,7 +132,10 @@ namespace TodoApp.Presentation.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CategoryId")
+                    b.Property<string>("BackGroundJobId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("CategoryId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -245,7 +248,7 @@ namespace TodoApp.Presentation.Migrations
                     b.HasOne("ToDoApp.Domain.Entity.User", "User")
                         .WithMany("Categories")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -282,8 +285,7 @@ namespace TodoApp.Presentation.Migrations
                     b.HasOne("ToDoApp.Domain.Entity.Category", "Category")
                         .WithMany("ToDoItems")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("ToDoApp.Domain.Entity.User", "User")
                         .WithMany("ToDoItems")

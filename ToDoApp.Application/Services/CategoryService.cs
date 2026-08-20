@@ -10,7 +10,6 @@ namespace ToDoApp.Application.Services
     {
         private readonly IGenericRepository<Category, int> _RepoCategory;
         private readonly IGenericRepository<ToDoItem, int> _RepoTodo;
-
         private readonly IGenericRepository<User, int> _RepoUser;
         private readonly ISpecificationBuilderFactory _Factory;
         public CategoryService(
@@ -140,6 +139,17 @@ namespace ToDoApp.Application.Services
 
             if (Category == null)
                 throw new Exception("We Have Problem To Remove It");
+            
+            var Spec = _Factory.CreateBuilder<ToDoItem>()
+                .AddCriteria(t => t.UserId == UserId)
+                .AddCriteria(t => t.CategoryId == Id);
+
+            var ToDos = await _RepoTodo.ListAsync(Spec);
+
+            if (ToDos.Any())
+            {
+                await _RepoTodo.UpdateRangeAsync(ToDos);
+            }
 
             await _RepoCategory.DeleteAsync(Id);
             return true;
@@ -166,7 +176,7 @@ namespace ToDoApp.Application.Services
 
             foreach (var todo in ToDos)
             {
-                todo.CategoryId = 1;
+                todo.CategoryId = null;
             }
 
             if (ToDos.Any())

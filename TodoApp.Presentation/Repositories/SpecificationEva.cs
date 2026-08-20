@@ -21,7 +21,14 @@ namespace TodoApp.Presentation.Repositories
             }
             if (specification.OrderBy != null)
             {
-                Query = Query.OrderBy(specification.OrderBy);
+                if(specification.OrderByDescending == false)
+                {
+                    Query = Query.OrderBy(specification.OrderBy);
+                }
+                else
+                {
+                    Query = Query.OrderByDescending(specification.OrderBy);
+                }
             }
             return Query;
         }

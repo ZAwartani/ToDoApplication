@@ -150,10 +150,12 @@ namespace ToDoApp.Application.Services
 
             var TokenSpec = _Factory.CreateBuilder<Token>()
                  .AddCriteria(t => t.UserId == User.Id)
-                 .ApplyOrderBy(t => t.CreatedDate, true);
+                 .AddCriteria(t => !t.RefreshTokenRevokedAt.HasValue)
+                 .ApplyOrderBy(t => t.CreatedDate , true);
 
             var UserToken = await _TokenRepo.GetAsync(TokenSpec);
-            if (UserToken.RefreshTokenRevokedAt != null && UserToken != null)
+
+            if (UserToken != null)
             {
                 UserToken.RefreshTokenRevokedAt = DateTime.UtcNow;
                 await _TokenRepo.UpdateAsync(UserToken);
@@ -317,10 +319,10 @@ namespace ToDoApp.Application.Services
 
             var Claims = new[]
             {
-        new Claim(ClaimTypes.NameIdentifier, User.Id.ToString()),
-        new Claim(ClaimTypes.Email, User.Email),
-        new Claim(ClaimTypes.Role, User.RoleId.ToString())
-    };
+                new Claim(ClaimTypes.NameIdentifier, User.Id.ToString()),
+                new Claim(ClaimTypes.Email, User.Email),
+                new Claim(ClaimTypes.Role, User.RoleId.ToString())
+            };
 
             var Key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(JWTKey));

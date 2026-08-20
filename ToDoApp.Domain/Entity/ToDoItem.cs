@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using ToDoApp.Domain.Enums;
 using ToDoApp.Domain.Interfaces;
@@ -15,9 +16,10 @@ namespace ToDoApp.Domain.Entity
         public EnumPriority Priority { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime ExpireDate { get; set; }
+        public string? BackGroundJobId { get; set;}
 
         [ForeignKey(nameof(Category))]
-        public int CategoryId { get; set; }
+        public int? CategoryId { get; set; }
         public Category Category { get; set; }
 
         [ForeignKey(nameof(User))]
@@ -37,8 +39,9 @@ namespace ToDoApp.Domain.Entity
             EnumPriority priority,
             int userId,
             DateTime expireDate,
-            int categoryId,
-            EnumRecurring? recurringSetting)
+            int? categoryId,
+            EnumRecurring? recurringSetting,
+            string? backgroundjobid)
         {
             if (string.IsNullOrWhiteSpace(title))
                 throw new ArgumentException("The Title Is Empty");
@@ -52,6 +55,7 @@ namespace ToDoApp.Domain.Entity
             CategoryId = categoryId;
             RecurringSetting = recurringSetting;
             IsComplete = EnumCompleteStatus.NotComplete;
+            backgroundjobid = BackGroundJobId;
         }
 
         public void Update(
@@ -59,8 +63,9 @@ namespace ToDoApp.Domain.Entity
             string? description,
             EnumPriority? priority,
             DateTime? expireDate,
-            int categoryId,
-            EnumRecurring? recurring)
+            int? categoryId,
+            EnumRecurring? recurring,
+            string? backgroundjobid)
         {
             if (!string.IsNullOrWhiteSpace(title))
                 Title = title;
@@ -78,6 +83,9 @@ namespace ToDoApp.Domain.Entity
 
             if (recurring.HasValue)
                 RecurringSetting = recurring.Value;
+
+            if (backgroundjobid != null)
+                BackGroundJobId = backgroundjobid;
         }
 
         public void UpdateStatus(bool isComplete)

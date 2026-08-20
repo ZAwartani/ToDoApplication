@@ -37,7 +37,7 @@ namespace TodoApp.Presentation.Persistence
                 .HasOne(x => x.User)
                 .WithMany(x => x.Categories)
                 .HasForeignKey(x => x.UserId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<ToDoItem>()
                 .HasOne(x => x.User)
@@ -49,8 +49,8 @@ namespace TodoApp.Presentation.Persistence
                 .HasOne(x => x.Category)
                 .WithMany(x => x.ToDoItems)
                 .HasForeignKey(x => x.CategoryId)
-                .OnDelete(DeleteBehavior.Cascade);
-
+                .OnDelete(DeleteBehavior.Restrict);
+            
             modelBuilder.Entity<Category>()
            .HasIndex(c => new { c.UserId, c.Title })
            .IsUnique();

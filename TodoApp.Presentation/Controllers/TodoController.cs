@@ -14,42 +14,34 @@ namespace TodoApp.Presentation.Controllers
     public class TodoController : ControllerBase
     {
         private readonly ITodoService _todoService;
+        private readonly ITodoJobs _TodoJobs;
 
-        public TodoController(ITodoService todoService)
+
+        public TodoController(ITodoService todoService , ITodoJobs todoJobs)
         {
-            _todoService = todoService;
+            this._todoService = todoService;
+            this._TodoJobs = todoJobs;
         }
+
 
         [HttpPost("Create")]
         public async Task<IActionResult> Create(CreateTodoDto dto)
         {
-            int userId = int.Parse(
+            int UserId = int.Parse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier)
             );
 
+            var Title = await _TodoJobs.SendEmailReminderForTodo(UserId, dto.Title, dto.ExpireDate);
 
             var result = await _todoService.Create(
                 dto,
-                userId
+                UserId,
+                Title
             );
-            
-            BackgroundJob.Schedule(() => _todoService.SendEmailReminderAsync(userId, dto.Title, dto.ExpireDate), dto.ExpireDate.AddDays(-1));
 
-            if(dto.Recurring != null)
-            {
-                if(dto.Recurring == EnumRecurring.Daily)
-                {
-                    RecurringJob.AddOrUpdate("daily-recurring", () => _todoService.CreateRecurringTodoAsync(dto , userId, EnumRecurring.Daily), Cron.Daily);
-                }
-                else if (dto.Recurring == EnumRecurring.Weekly)
-                {
-                    RecurringJob.AddOrUpdate("weekly-recurring", () => _todoService.CreateRecurringTodoAsync(dto, userId, EnumRecurring.Weekly), Cron.Weekly);
-                }
-                else if (dto.Recurring == EnumRecurring.Monthly)
-                {
-                    RecurringJob.AddOrUpdate("monthly-recurring", () => _todoService.CreateRecurringTodoAsync(dto, userId, EnumRecurring.Monthly), Cron.Monthly);
-                }
-            }    
+            await _TodoJobs.MakeRecurringTodo(dto , UserId);
+
+               
             return Ok("Created Successfully");
         }
 
@@ -59,16 +51,17 @@ namespace TodoApp.Presentation.Controllers
             int id,
             UpdateTodoDto dto)
         {
-            int userId = int.Parse(
+            int UserId = int.Parse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier)
             );
+            var Title = await _TodoJobs.SendEmailReminderForTodo(UserId, dto.Title, dto.ExpireDate);
+
             var result = await _todoService.Update(
                 dto,
                 id,
-                userId
+                UserId,
+                Title
             );
-
-            BackgroundJob.Schedule(() => _todoService.SendEmailReminderAsync(userId, dto.Title, dto.ExpireDate), dto.ExpireDate.AddDays(-1));
 
 
             if (!result)
@@ -94,10 +87,10 @@ namespace TodoApp.Presentation.Controllers
                 userId
             );
 
-
             if (!result)
                 return NotFound("Todo not found or not yours");
 
+            await _TodoJobs.RemoveSchedualJob(id);
 
             return Ok("Deleted Successfully");
         }

@@ -24,8 +24,9 @@ namespace ToDoApp.Application.DTOs
         string Description,
         EnumPriority Priority,
         DateTime ExpireDate,
-        int CategoryId,
-        EnumRecurring? Recurring
+        int? CategoryId,
+        EnumRecurring? Recurring,
+        string? BackGroundJobId
     );
 
 
@@ -34,10 +35,11 @@ namespace ToDoApp.Application.DTOs
         string? Description,
         EnumPriority? Priority,
         DateTime ExpireDate,
-        int CategoryId,
+        int? CategoryId,
         EnumRecurring? Recurring,
-        EnumCompleteStatus? IsComplete
-        
+        EnumCompleteStatus? IsCompleted,
+        string? BackGroundJobId
+
     );
 
 
