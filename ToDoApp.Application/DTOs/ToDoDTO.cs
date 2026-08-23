@@ -26,7 +26,7 @@ namespace ToDoApp.Application.DTOs
         DateTime ExpireDate,
         int? CategoryId,
         EnumRecurring? Recurring,
-        string? BackGroundJobId
+        EnumCompleteStatus CompleteStatus
     );
 
 
@@ -37,9 +37,7 @@ namespace ToDoApp.Application.DTOs
         DateTime ExpireDate,
         int? CategoryId,
         EnumRecurring? Recurring,
-        EnumCompleteStatus? IsCompleted,
-        string? BackGroundJobId
-
+        EnumCompleteStatus? IsCompleted
     );
 
 

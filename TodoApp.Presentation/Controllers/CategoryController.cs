@@ -18,11 +18,9 @@ namespace TodoApp.Presentation.Controllers
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryService _CategoryService;
-        private readonly ITodoJobs _TodoJobs;
 
-        public CategoryController(ITodoJobs todoJobs,ICategoryService _categoryService)
+        public CategoryController(ICategoryService _categoryService)
         {
-            this._TodoJobs = todoJobs;
             this._CategoryService = _categoryService;
         }
 
@@ -83,21 +81,8 @@ namespace TodoApp.Presentation.Controllers
                 User.FindFirstValue(ClaimTypes.NameIdentifier)
             );
 
-            var result = await _CategoryService.CascadeDeleteTodos
-                (Id, UserId , RemoveTodoItems);
-
-            if (result)
-            {
-                if (RemoveTodoItems)
-                {
-                    await _TodoJobs.RemoveSchedualJob(Id);
-                }
-                return Ok("Remove Category Sucessfull");
-            }
-            else
-            {
-                return BadRequest();
-            }   
+            var result = await _CategoryService.CascadeDeleteTodos(Id, UserId , RemoveTodoItems);
+            return Ok();
         }
 
         [HttpGet("GetMyCategoryWithTodo")]

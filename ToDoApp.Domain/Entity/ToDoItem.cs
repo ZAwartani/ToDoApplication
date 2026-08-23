@@ -16,7 +16,6 @@ namespace ToDoApp.Domain.Entity
         public EnumPriority Priority { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime ExpireDate { get; set; }
-        public string? BackGroundJobId { get; set;}
 
         [ForeignKey(nameof(Category))]
         public int? CategoryId { get; set; }
@@ -40,8 +39,8 @@ namespace ToDoApp.Domain.Entity
             int userId,
             DateTime expireDate,
             int? categoryId,
-            EnumRecurring? recurringSetting,
-            string? backgroundjobid)
+            EnumRecurring? recurringSetting
+            )
         {
             if (string.IsNullOrWhiteSpace(title))
                 throw new ArgumentException("The Title Is Empty");
@@ -55,7 +54,6 @@ namespace ToDoApp.Domain.Entity
             CategoryId = categoryId;
             RecurringSetting = recurringSetting;
             IsComplete = EnumCompleteStatus.NotComplete;
-            backgroundjobid = BackGroundJobId;
         }
 
         public void Update(
@@ -64,8 +62,7 @@ namespace ToDoApp.Domain.Entity
             EnumPriority? priority,
             DateTime? expireDate,
             int? categoryId,
-            EnumRecurring? recurring,
-            string? backgroundjobid)
+            EnumRecurring? recurring)
         {
             if (!string.IsNullOrWhiteSpace(title))
                 Title = title;
@@ -83,9 +80,6 @@ namespace ToDoApp.Domain.Entity
 
             if (recurring.HasValue)
                 RecurringSetting = recurring.Value;
-
-            if (backgroundjobid != null)
-                BackGroundJobId = backgroundjobid;
         }
 
         public void UpdateStatus(bool isComplete)

@@ -5,7 +5,7 @@ using ToDoApp.Domain.Interfaces;
 
 namespace TodoApp.Presentation.Repositories
 {
-    public class GenericRepository<TEntity, TKey> : IGenericRepository<TEntity, TKey> where TEntity :  IEntity<TKey>
+    public class GenericRepository<TEntity, TKey> : IGenericRepository<TEntity, TKey> where TEntity :class,  IEntity<TKey>
     {
         private readonly AppDbContext _context;
         public GenericRepository(AppDbContext context)

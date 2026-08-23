@@ -1,5 +1,6 @@
 ﻿using MailKit.Net.Smtp;
 using MimeKit;
+using Org.BouncyCastle.Crypto.Signers;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using ToDoApp.Application.DTOs;
@@ -45,17 +46,16 @@ namespace ToDoApp.Application.Services
                 UpdateTodoDto.Priority,
                 UpdateTodoDto.ExpireDate,
                 UpdateTodoDto.CategoryId,
-                UpdateTodoDto.Recurring,
-                UpdateTodoDto.BackGroundJobId
+                UpdateTodoDto.Recurring
             );
 
             await _RepoTodo.UpdateAsync(ToDo);
             return true;
         }
-        public async Task<bool> Create(CreateTodoDto Dto, int UserId , string? BackGroundJobId)
+        public async Task<bool> Create(CreateTodoDto Dto, int UserId)
         {
-            object Todo;
-            if(Dto.CategoryId == null)
+            ToDoItem Todo;
+            if (Dto.CategoryId == null)
             {
                 Todo = new ToDoItem(
                     Dto.Title,
@@ -64,32 +64,39 @@ namespace ToDoApp.Application.Services
                     UserId,
                     Dto.ExpireDate,
                     null,
-                    Dto.Recurring,
-                    BackGroundJobId
+                    Dto.Recurring
                 );
             }
 
-            var CategorySpec = _Factory.CreateBuilder<Category>()
-                .AddCriteria(x => x.UserId == UserId)
-                .AddCriteria(x => x.Id == Dto.CategoryId);
+            else
+            {
 
-            var Category = await _RepoCategory.GetAsync(CategorySpec);
+                var CategorySpec = _Factory.CreateBuilder<Category>()
+                    .AddCriteria(x => x.UserId == UserId)
+                    .AddCriteria(x => x.Id == Dto.CategoryId);
 
-            var todo = new ToDoItem(
-                   Dto.Title,
-                   Dto.Description,
-                   Dto.Priority,
-                   UserId,
-                   Dto.ExpireDate,
-                   Dto.CategoryId,
-                   Dto.Recurring,
-                   BackGroundJobId
+                var Category = await _RepoCategory.GetAsync(CategorySpec);
 
-            );
-            await _RepoTodo.AddAsync(todo);
-
+                if (Category != null)
+                {
+                    Todo = new ToDoItem(
+                           Dto.Title,
+                           Dto.Description,
+                           Dto.Priority,
+                           UserId,
+                           Dto.ExpireDate,
+                           Dto.CategoryId,
+                           Dto.Recurring
+                    );
+                }
+                else
+                {
+                    throw new Exception("We have Problem");
+                }
+            }
+            await _RepoTodo.AddAsync(Todo);
             return true;
-        } // checked
+        }
 
         public async Task<IReadOnlyList<ReturnTodoItem>> ListAsync(int UserId, string? FilterBy, bool Descending)
         {
@@ -143,8 +150,7 @@ namespace ToDoApp.Application.Services
         public async Task<bool> Update(
             UpdateTodoDto Dto,
             int Id,
-            int UserId,
-            string? backGroundJobId)
+            int UserId)
         {
             var ToDo = await _RepoTodo.GetByIdAsync(Id);
 
@@ -157,8 +163,7 @@ namespace ToDoApp.Application.Services
                 Dto.Priority,
                 Dto.ExpireDate,
                 Dto.CategoryId,
-                Dto.Recurring,
-                backGroundJobId
+                Dto.Recurring
             );
             await _RepoTodo.UpdateAsync(ToDo);
             return true;
@@ -245,72 +250,6 @@ namespace ToDoApp.Application.Services
                 }
             }
             Console.WriteLine($"Sending email reminder to user {UserId} for todo '{Title}' expiring on {ExpireDate}");
-        }
-
-        public async Task CreateRecurringTodoAsync(CreateTodoDto Dto, int UserId , EnumRecurring EnumRecurring)
-        {
-            if (EnumRecurring == EnumRecurring.Daily)
-            {
-                var ToDo = new ToDoItem(
-                    Dto.Title,
-                    Dto.Description,
-                    Dto.Priority,
-                    UserId,
-                    Dto.ExpireDate,
-                    Dto.CategoryId,
-                    EnumRecurring.Daily,
-                    Dto.BackGroundJobId
-                    
-                );
-                _RepoTodo.AddAsync(ToDo);
-            }
-            else if (EnumRecurring == EnumRecurring.Weekly)
-            {
-                var ToDo = new ToDoItem(
-                    Dto.Title,
-                    Dto.Description,
-                    Dto.Priority,
-                    UserId,
-                    Dto.ExpireDate,
-                    Dto.CategoryId,
-                    EnumRecurring.Weekly,
-                    Dto.BackGroundJobId
-                );
-                _RepoTodo.AddAsync(ToDo);
-            }
-            else if (EnumRecurring == EnumRecurring.Monthly)
-            {
-                var ToDo = new ToDoItem(
-                    Dto.Title,
-                    Dto.Description,
-                    Dto.Priority,
-                    UserId,
-                    Dto.ExpireDate,
-                    Dto.CategoryId,
-                    EnumRecurring.Monthly,
-                    Dto.BackGroundJobId
-                );
-                _RepoTodo.AddAsync(ToDo);
-            }
-        }
-
-        public async Task<string> GetTitleOfJob(int Id)
-        {
-            var Spec =  _Factory.CreateBuilder<ToDoItem>()
-                .AddCriteria(x => x.Id == Id);
-
-            var ResultFromQuery = await _RepoTodo.GetAsync(Spec);
-            
-            if(ResultFromQuery == null)
-            {
-                throw new Exception();
-            }
-            var TitleOfBackgroundJob = ResultFromQuery.BackGroundJobId;
-            if (TitleOfBackgroundJob == null)
-            {
-                return null;
-            }
-            return TitleOfBackgroundJob;
         }
     }
 }
