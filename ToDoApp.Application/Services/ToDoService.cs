@@ -14,6 +14,7 @@ namespace ToDoApp.Application.Services
 {
     public class ToDoService : ITodoService
     {
+        private readonly ICurrentUser _currentUser;
         private readonly IGenericRepository<ToDoItem, int> _RepoTodo;
         private readonly IGenericRepository<Category, int> _RepoCategory;
         private readonly IGenericRepository<User, int> _RepoUser;
@@ -24,14 +25,17 @@ namespace ToDoApp.Application.Services
             IGenericRepository<ToDoItem, int> genericRepositoryTodoItem,
             IGenericRepository<Category, int> genericRepositoryCategory,
             IGenericRepository<User, int> genericRepositoryUser,
-            ISpecificationBuilderFactory factory
+            ISpecificationBuilderFactory factory,
+            ICurrentUser _currentUser
             )
         {
+            this._currentUser = _currentUser;
             this._RepoTodo = genericRepositoryTodoItem;
             this._RepoCategory = genericRepositoryCategory;
             this._Factory = factory;
             this._RepoUser = genericRepositoryUser;
         }
+        private int UserId => _currentUser.UserId;
         public async Task<bool> UpdateTodoForUser(UpdateTodoDto UpdateTodoDto, int Id)
         {
 
@@ -52,7 +56,7 @@ namespace ToDoApp.Application.Services
             await _RepoTodo.UpdateAsync(ToDo);
             return true;
         }
-        public async Task<bool> Create(CreateTodoDto Dto, int UserId)
+        public async Task<bool> Create(CreateTodoDto Dto)
         {
             ToDoItem Todo;
             if (Dto.CategoryId == null)
@@ -98,8 +102,9 @@ namespace ToDoApp.Application.Services
             return true;
         }
 
-        public async Task<IReadOnlyList<ReturnTodoItem>> ListAsync(int UserId, string? FilterBy, bool Descending)
+        public async Task<IReadOnlyList<ReturnTodoItem>> ListAsync(string? FilterBy, bool Descending)
         {
+
             var Spec = _Factory.CreateBuilder<ToDoItem>()
                 .AddCriteria(x => x.UserId == UserId);
 
@@ -149,9 +154,9 @@ namespace ToDoApp.Application.Services
 
         public async Task<bool> Update(
             UpdateTodoDto Dto,
-            int Id,
-            int UserId)
+            int Id)
         {
+
             var ToDo = await _RepoTodo.GetByIdAsync(Id);
 
             if (ToDo == null || ToDo.UserId != UserId)
@@ -170,8 +175,7 @@ namespace ToDoApp.Application.Services
         } // Checked
 
         public async Task<bool> Delete(
-            int Id,
-            int UserId)
+            int Id)
         {
 
             var ToDo = await _RepoTodo
@@ -190,8 +194,7 @@ namespace ToDoApp.Application.Services
 
         public async Task<bool> MarkAsComplete(
             MarkAsComplete Dto,
-            int Id,
-            int UserId)
+            int Id)
         {
 
             var ToDo = await _RepoTodo
@@ -211,8 +214,9 @@ namespace ToDoApp.Application.Services
             return true;
         }
 
-        public async Task SendEmailReminderAsync(int UserId, string Title, DateTime? ExpireDate)
+        public async Task SendEmailReminderAsync(string Title, DateTime? ExpireDate)
         {
+
             var Spec = _Factory.CreateBuilder<User>()
                 .AddCriteria(u => u.Id == UserId);
 

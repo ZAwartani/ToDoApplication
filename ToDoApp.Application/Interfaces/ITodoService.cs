@@ -11,12 +11,12 @@ namespace ToDoApp.Application.Interfaces
 {
     public interface ITodoService
     {
-        public Task<bool> Create(CreateTodoDto Dto , int UserId);
-        public Task<bool> Update(UpdateTodoDto Dto , int UserId , int Id);
-        public Task<bool> Delete(int Id , int UserId);
-        public Task<bool> MarkAsComplete(MarkAsComplete Dto , int Id , int UserId);
-        public Task<IReadOnlyList<ReturnTodoItem>> ListAsync(int UserId , string? FilterBy , bool Descending);
-        public Task SendEmailReminderAsync(int UserId, string Title, DateTime? ExpireDate);
+        public Task<bool> Create(CreateTodoDto Dto);
+        public Task<bool> Update(UpdateTodoDto Dto , int Id);
+        public Task<bool> Delete(int Id);
+        public Task<bool> MarkAsComplete(MarkAsComplete Dto , int Id);
+        public Task<IReadOnlyList<ReturnTodoItem>> ListAsync(string? FilterBy , bool Descending);
+        public Task SendEmailReminderAsync(string Title, DateTime? ExpireDate);
         public Task<bool> UpdateTodoForUser(UpdateTodoDto UpdateTodoDto, int Id);
 
     }

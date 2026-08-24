@@ -190,6 +190,9 @@ namespace TodoApp.Presentation.Migrations
                     b.Property<int?>("ToDoItemId")
                         .HasColumnType("int");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
@@ -197,6 +200,8 @@ namespace TodoApp.Presentation.Migrations
                     b.HasIndex("Path");
 
                     b.HasIndex("ToDoItemId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("FilesUploads");
                 });
@@ -238,9 +243,6 @@ namespace TodoApp.Presentation.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("BackGroundJobId")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("CategoryId")
                         .HasColumnType("int");
@@ -473,9 +475,17 @@ namespace TodoApp.Presentation.Migrations
                         .WithMany()
                         .HasForeignKey("ToDoItemId");
 
+                    b.HasOne("ToDoApp.Domain.Entity.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Category");
 
                     b.Navigation("ToDoItem");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ToDoApp.Domain.Entity.ToDoItem", b =>

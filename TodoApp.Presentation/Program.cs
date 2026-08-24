@@ -8,6 +8,7 @@ using System.Text;
 using TodoApp.Presentation.Identity;
 using TodoApp.Presentation.Persistence;
 using TodoApp.Presentation.Repositories;
+using TodoApp.Presentation.Service;
 using ToDoApp.Application.Concreate.Factoryes;
 using ToDoApp.Application.Interfaces;
 using ToDoApp.Application.Interfaces.Factory;
@@ -70,6 +71,8 @@ namespace TodoApp.Presentation
                 typeof(IGenericRepository<,>),
                 typeof(GenericRepository<,>)
             );
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<ICurrentUser , CurrentUser>();
 
             builder.Services.AddScoped<IAuthentications, AuthenticationServices>();
 

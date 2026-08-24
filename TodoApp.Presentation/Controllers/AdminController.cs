@@ -84,7 +84,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpGet("GetTodoWithCategory/{UserId}/{CategoryId}")]
         public async Task<IActionResult> GetTodoWithCategory(int UserId , int CategoryId)
         {
-            var todo = await _CategoryService.GetDetails(UserId, CategoryId);
+            var todo = await _CategoryService.GetDetails(CategoryId);
 
             if (todo == null)
                 return NotFound("This User Dont Found Or Don't Have TodoItem");

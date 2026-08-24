@@ -25,11 +25,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpPost("Create")]
         public async Task<IActionResult> Create(CreateTodoDto dto)
         {
-            int UserId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-            );
-
-            await _todoService.Create(dto, UserId);   
+            await _todoService.Create(dto);   
             return Ok("Created Successfully");
         }
 
@@ -39,13 +35,9 @@ namespace TodoApp.Presentation.Controllers
             int id,
             UpdateTodoDto dto)
         {
-            int UserId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-            );
             var result = await _todoService.Update(
                 dto,
-                id,
-                UserId
+                id
             );
             if (!result)
                 return BadRequest("Todo not found or not yours");
@@ -60,13 +52,9 @@ namespace TodoApp.Presentation.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            int userId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-            );
 
             var result = await _todoService.Delete(
-                id,
-                userId
+                id
             );
 
             if (!result)
@@ -80,13 +68,9 @@ namespace TodoApp.Presentation.Controllers
             int id,
             MarkAsComplete dto)
         {
-            int userId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-            );
             var result = await _todoService.MarkAsComplete(
                 dto,
-                id,
-                userId
+                id
             );
 
             if (!result)
@@ -98,11 +82,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpGet("GetMyTodos/{FilterBy}/{Descending}")]
         public async Task<IActionResult> GetMyTodos(string FilterBy, bool Descending)
         {
-            int userId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-            );
-
-            var todos = await _todoService.ListAsync(userId, FilterBy, Descending);
+            var todos = await _todoService.ListAsync(FilterBy, Descending);
             return Ok(todos);
         }
     }
