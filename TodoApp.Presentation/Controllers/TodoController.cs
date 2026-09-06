@@ -14,34 +14,18 @@ namespace TodoApp.Presentation.Controllers
     public class TodoController : ControllerBase
     {
         private readonly ITodoService _todoService;
-        private readonly ITodoJobs _TodoJobs;
 
 
-        public TodoController(ITodoService todoService , ITodoJobs todoJobs)
+        public TodoController(ITodoService todoService )
         {
             this._todoService = todoService;
-            this._TodoJobs = todoJobs;
         }
 
 
         [HttpPost("Create")]
         public async Task<IActionResult> Create(CreateTodoDto dto)
         {
-            int UserId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-            );
-
-            var Title = await _TodoJobs.SendEmailReminderForTodo(UserId, dto.Title, dto.ExpireDate);
-
-            var result = await _todoService.Create(
-                dto,
-                UserId,
-                Title
-            );
-
-            await _TodoJobs.MakeRecurringTodo(dto , UserId);
-
-               
+            await _todoService.Create(dto);   
             return Ok("Created Successfully");
         }
 
@@ -51,22 +35,12 @@ namespace TodoApp.Presentation.Controllers
             int id,
             UpdateTodoDto dto)
         {
-            int UserId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-            );
-            var Title = await _TodoJobs.SendEmailReminderForTodo(UserId, dto.Title, dto.ExpireDate);
-
             var result = await _todoService.Update(
                 dto,
-                id,
-                UserId,
-                Title
+                id
             );
-
-
             if (!result)
                 return BadRequest("Todo not found or not yours");
-
 
             return Ok("Updated Successfully");
         }
@@ -78,19 +52,13 @@ namespace TodoApp.Presentation.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            int userId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-            );
 
             var result = await _todoService.Delete(
-                id,
-                userId
+                id
             );
 
             if (!result)
                 return NotFound("Todo not found or not yours");
-
-            await _TodoJobs.RemoveSchedualJob(id);
 
             return Ok("Deleted Successfully");
         }
@@ -100,13 +68,9 @@ namespace TodoApp.Presentation.Controllers
             int id,
             MarkAsComplete dto)
         {
-            int userId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-            );
             var result = await _todoService.MarkAsComplete(
                 dto,
-                id,
-                userId
+                id
             );
 
             if (!result)
@@ -118,11 +82,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpGet("GetMyTodos/{FilterBy}/{Descending}")]
         public async Task<IActionResult> GetMyTodos(string FilterBy, bool Descending)
         {
-            int userId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-            );
-
-            var todos = await _todoService.ListAsync(userId, FilterBy, Descending);
+            var todos = await _todoService.ListAsync(FilterBy, Descending);
             return Ok(todos);
         }
     }

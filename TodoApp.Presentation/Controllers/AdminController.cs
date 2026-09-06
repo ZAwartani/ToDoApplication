@@ -10,16 +10,14 @@ namespace TodoApp.Presentation.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "UserAdmin")]
+    [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
         private readonly ICategoryService _CategoryService;
         private readonly IAuthentications _AdminService;
         private readonly ITodoService _TodoService;
-        private readonly ITodoJobs _TodoJobs;
-        public AdminController( ITodoJobs todoJobs,IAuthentications adminService , ICategoryService categoryService, ITodoService todoService)
+        public AdminController( IAuthentications adminService , ICategoryService categoryService, ITodoService todoService)
         {
-            _TodoJobs = todoJobs;
             _AdminService = adminService;
             _CategoryService = categoryService;
             _TodoService = todoService;
@@ -29,12 +27,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers()
         {
-            var users = await _AdminService.ListOfUserForAdmin();
-
-            if (users == null)
-                return NotFound();
-
-            return Ok(users);
+            return Ok(await _AdminService.ListOfUserForAdmin());
         }
 
 
@@ -91,7 +84,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpGet("GetTodoWithCategory/{UserId}/{CategoryId}")]
         public async Task<IActionResult> GetTodoWithCategory(int UserId , int CategoryId)
         {
-            var todo = await _CategoryService.GetDetails(UserId, CategoryId);
+            var todo = await _CategoryService.GetDetails(CategoryId);
 
             if (todo == null)
                 return NotFound("This User Dont Found Or Don't Have TodoItem");

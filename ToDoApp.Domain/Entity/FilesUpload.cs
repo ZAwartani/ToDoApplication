@@ -13,6 +13,10 @@ namespace ToDoApp.Domain.Entity
         public int Id { get; set; }
         public string Path { get; set; }
 
+        [ForeignKey(nameof(User))]
+        public int UserId { get; set; }
+        public User User { get; set; }
+
         [ForeignKey(nameof(ToDoItem))]
         public int? ToDoItemId { get; set; }
         public ToDoItem? ToDoItem { get; set; }
@@ -20,5 +24,15 @@ namespace ToDoApp.Domain.Entity
         [ForeignKey(nameof(Category))]
         public int? CategoryId { get; set; }
         public Category? Category { get; set; }
+
+        private FilesUpload() { }
+
+        public FilesUpload(string path , int UserId , int? TodoItemId , int? CategoryId)
+        {
+            this.Path = path ;
+            this.UserId = UserId;
+            this.ToDoItemId = TodoItemId;
+            this.CategoryId = CategoryId;
+        }
     }
 }

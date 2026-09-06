@@ -8,24 +8,28 @@ namespace ToDoApp.Application.Services
 {
     public class CategoryService : ICategoryService
     {
+        private readonly ICurrentUser _CurrentUser;
         private readonly IGenericRepository<Category, int> _RepoCategory;
         private readonly IGenericRepository<ToDoItem, int> _RepoTodo;
         private readonly IGenericRepository<User, int> _RepoUser;
         private readonly ISpecificationBuilderFactory _Factory;
         public CategoryService(
+            ICurrentUser currentUser,
             IGenericRepository<Category, int> CategoryRepository,
             IGenericRepository<ToDoItem, int> TodoRepository,
             IGenericRepository<User,int> UserRepository,
             ISpecificationBuilderFactory factory)
         {
+            _CurrentUser = currentUser;
             _RepoCategory = CategoryRepository;
             _RepoTodo = TodoRepository;
             _RepoUser = UserRepository;
             _Factory = factory;
         }
-
-        public Task<bool> CascadeDeleteTodos(int Id, int UserId , bool DeleteWithAllTodos)
+        private int UserId => _CurrentUser.UserId;
+        public Task<bool> CascadeDeleteTodos(int Id , bool DeleteWithAllTodos)
         {
+
             if(DeleteWithAllTodos)
             {
                 return DeleteWithAllTodo(Id, UserId);
@@ -36,10 +40,9 @@ namespace ToDoApp.Application.Services
             }
         }
 
-        public async Task<bool> Create(
-            ReturnCategory CategoryDto,
-            int UserId)
+        public async Task<bool> Create(ReturnCategory CategoryDto)
         {
+
             var Spec = _Factory.CreateBuilder<User>()
                 .AddCriteria(x => x.Id== UserId);
 
@@ -58,8 +61,9 @@ namespace ToDoApp.Application.Services
             return false;
         }
 
-        public async Task<IReadOnlyList<CategoryAndToDoItemDto>> GetDetails(int UserId , int CategoryId)
+        public async Task<IReadOnlyList<CategoryAndToDoItemDto>> GetDetails(int CategoryId)
         {
+
             var Spec = _Factory.CreateBuilder<Category>()
                 .AddCriteria(c => c.UserId == UserId)
                 .AddCriteria(c => c.Id == CategoryId)
@@ -85,8 +89,9 @@ namespace ToDoApp.Application.Services
             return Mapped;
         }
 
-        public async Task<IReadOnlyList<ListCategoryDto>> List(int UserId)
+        public async Task<IReadOnlyList<ListCategoryDto>> List()
         {
+
             var Result = await _RepoCategory.ListAsync(
                 _Factory.CreateBuilder<Category>()
                 .AddCriteria(c => c.UserId == UserId)
@@ -106,9 +111,9 @@ namespace ToDoApp.Application.Services
 
         public async Task<bool> Update(
             ReturnCategory CategoryDto,
-            int Id,
-            int UserId)
+            int Id)
         {
+
             var Spec = _Factory.CreateBuilder<Category>()
                 .AddCriteria(c => c.UserId == UserId);
 
@@ -127,9 +132,7 @@ namespace ToDoApp.Application.Services
             return true;
         }
 
-        private async Task<bool> DeleteWithAllTodo(
-            int Id,
-            int UserId)
+        private async Task<bool> DeleteWithAllTodo(int Id , int UserId)
         {
             var SpecCategory = _Factory.CreateBuilder<Category>()
                 .AddCriteria(x => x.UserId == UserId)
@@ -154,9 +157,7 @@ namespace ToDoApp.Application.Services
             await _RepoCategory.DeleteAsync(Id);
             return true;
         }
-        private async Task<bool> DeleteWithoutTodo(
-            int Id,
-            int UserId)
+        private async Task<bool> DeleteWithoutTodo(int Id , int UserId)
         {
             var SpecCategory = _Factory.CreateBuilder<Category>()
                  .AddCriteria(x => x.UserId == UserId)

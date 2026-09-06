@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ToDoApp.Domain.Interfaces
 {
-    public class IEntity<TKey>
+    public interface IEntity<TKey>
     {
         TKey Id {  get; set; }
     }

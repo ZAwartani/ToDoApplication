@@ -18,31 +18,16 @@ namespace TodoApp.Presentation.Controllers
     public class CategoryController : ControllerBase
     {
         private readonly ICategoryService _CategoryService;
-        private readonly ITodoJobs _TodoJobs;
 
-        public CategoryController(ITodoJobs todoJobs,ICategoryService _categoryService)
+        public CategoryController(ICategoryService _categoryService)
         {
-            this._TodoJobs = todoJobs;
             this._CategoryService = _categoryService;
-        }
-
-        [HttpGet("CheckClaims")]
-        public IActionResult CheckClaims()
-        {
-            var Claims = User.Claims.Select(c => new
-            {
-                c.Type,
-                c.Value
-            });
-
-            return Ok(Claims);
         }
 
         [HttpPost("CreateCategory")]
         public async Task<IActionResult> CreateCategory(ReturnCategory dto)
         {
-            var UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var Result = await _CategoryService.Create(dto, UserId);
+            var Result = await _CategoryService.Create(dto);
             if (Result)
             {
                 return Ok("Created Sucessful");
@@ -58,12 +43,8 @@ namespace TodoApp.Presentation.Controllers
             int Id,
             ReturnCategory dto)
         {
-            int UserId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-            );
-
             var Result = await _CategoryService.Update
-                (dto, Id, UserId);
+                (dto, Id);
             
             if (Result)
             {
@@ -79,36 +60,14 @@ namespace TodoApp.Presentation.Controllers
         public async Task<IActionResult> Remove
             (int Id , bool RemoveTodoItems)
         {
-            int UserId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-            );
-
-            var result = await _CategoryService.CascadeDeleteTodos
-                (Id, UserId , RemoveTodoItems);
-
-            if (result)
-            {
-                if (RemoveTodoItems)
-                {
-                    await _TodoJobs.RemoveSchedualJob(Id);
-                }
-                return Ok("Remove Category Sucessfull");
-            }
-            else
-            {
-                return BadRequest();
-            }   
+            var result = await _CategoryService.CascadeDeleteTodos(Id, RemoveTodoItems);
+            return Ok();
         }
 
         [HttpGet("GetMyCategoryWithTodo")]
         public async Task<IActionResult> GetMyCategoryWithTodo(int CategoryId)
         {
-            int UserId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-            );
-
-
-            var Result = await _CategoryService.GetDetails(UserId , CategoryId);
+            var Result = await _CategoryService.GetDetails(CategoryId);
 
             return Ok(Result);
         }
@@ -117,7 +76,7 @@ namespace TodoApp.Presentation.Controllers
         public async Task<IActionResult> ListCategories()
         {
             int UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var result = await _CategoryService.List(UserId);
+            var result = await _CategoryService.List();
             return Ok(result);
         }
     }
