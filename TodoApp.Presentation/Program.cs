@@ -5,12 +5,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using TodoApp.Presentation.BackgroundJobs;
 using TodoApp.Presentation.Identity;
 using TodoApp.Presentation.Persistence;
 using TodoApp.Presentation.Repositories;
 using TodoApp.Presentation.Service;
 using ToDoApp.Application.Concreate.Factoryes;
 using ToDoApp.Application.Interfaces;
+using ToDoApp.Application.Interfaces.BackgroundJob;
+using ToDoApp.Application.Interfaces.BackgroundJobs;
 using ToDoApp.Application.Interfaces.Factory;
 using ToDoApp.Application.Interfaces.Specification;
 using ToDoApp.Application.Services;
@@ -73,9 +76,10 @@ namespace TodoApp.Presentation
             );
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<ICurrentUser , CurrentUser>();
-
+            builder.Services.AddScoped<IAuthenticationBackgroundJob, AuthenticationBackgroundJobService>();
+            builder.Services.AddScoped<ITodoBackgroundJob, TodoBackgroundJob>();
             builder.Services.AddScoped<IAuthentications, AuthenticationServices>();
-
+            builder.Services.AddScoped<TodoRecurring>();
             builder.Services.AddScoped<ICategoryService, CategoryService>();
 
             builder.Services.AddScoped<ITodoService, ToDoService>();
@@ -264,7 +268,11 @@ namespace TodoApp.Presentation
 
             app.MapControllers();
 
-
+            RecurringJob.AddOrUpdate<TodoRecurring>(
+                "enqueue-recurring-todos",
+                job => job.EnqueuJobRecurringTodo(),
+                Cron.MinuteInterval(1)
+            );
             await app.RunAsync();
         }
     }

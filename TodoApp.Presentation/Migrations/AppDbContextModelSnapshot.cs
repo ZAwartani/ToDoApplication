@@ -206,6 +206,30 @@ namespace TodoApp.Presentation.Migrations
                     b.ToTable("FilesUploads");
                 });
 
+            modelBuilder.Entity("ToDoApp.Domain.Entity.RecurringTodo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsSend")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("OccurrenceDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TodoId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TodoId");
+
+                    b.ToTable("RecurringTodos");
+                });
+
             modelBuilder.Entity("ToDoApp.Domain.Entity.Role", b =>
                 {
                     b.Property<int>("Id")
@@ -254,7 +278,7 @@ namespace TodoApp.Presentation.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("ExpireDate")
+                    b.Property<DateTime?>("ExpireDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("IsComplete")
@@ -488,6 +512,17 @@ namespace TodoApp.Presentation.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ToDoApp.Domain.Entity.RecurringTodo", b =>
+                {
+                    b.HasOne("ToDoApp.Domain.Entity.ToDoItem", "Todo")
+                        .WithMany("RecurringTodos")
+                        .HasForeignKey("TodoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Todo");
+                });
+
             modelBuilder.Entity("ToDoApp.Domain.Entity.ToDoItem", b =>
                 {
                     b.HasOne("ToDoApp.Domain.Entity.Category", "Category")
@@ -520,6 +555,11 @@ namespace TodoApp.Presentation.Migrations
             modelBuilder.Entity("ToDoApp.Domain.Entity.Category", b =>
                 {
                     b.Navigation("ToDoItems");
+                });
+
+            modelBuilder.Entity("ToDoApp.Domain.Entity.ToDoItem", b =>
+                {
+                    b.Navigation("RecurringTodos");
                 });
 
             modelBuilder.Entity("ToDoApp.Domain.Entity.User", b =>

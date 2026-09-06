@@ -15,7 +15,7 @@ namespace ToDoApp.Domain.Entity
         public string Description { get; set; }
         public EnumPriority Priority { get; set; }
         public DateTime CreatedAt { get; set; }
-        public DateTime ExpireDate { get; set; }
+        public DateTime? ExpireDate { get; set; }
 
         [ForeignKey(nameof(Category))]
         public int? CategoryId { get; set; }
@@ -24,7 +24,7 @@ namespace ToDoApp.Domain.Entity
         [ForeignKey(nameof(User))]
         public int UserId { get; set; }
         public User User { get; set; }
-
+        public ICollection<RecurringTodo> RecurringTodos { get; set; }
         public EnumCompleteStatus IsComplete { get; set; }
         public EnumRecurring? RecurringSetting { get; set; }
 

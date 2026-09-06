@@ -19,6 +19,7 @@ namespace TodoApp.Presentation.Persistence
         public DbSet<ToDoItem> ToDoItems { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<FilesUpload> FilesUploads { get; set; }
+        public DbSet<RecurringTodo> RecurringTodos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -36,6 +37,12 @@ namespace TodoApp.Presentation.Persistence
                 .HasOne(x => x.User)
                 .WithMany(x => x.Categories)
                 .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<RecurringTodo>()
+                .HasOne(x => x.Todo)
+                .WithMany(x => x.RecurringTodos)
+                .HasForeignKey(x => x.TodoId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<ToDoItem>()
@@ -56,7 +63,6 @@ namespace TodoApp.Presentation.Persistence
 
             modelBuilder.Entity<FilesUpload>()
                 .HasIndex(x => x.Path);
-
         }
     }
 }

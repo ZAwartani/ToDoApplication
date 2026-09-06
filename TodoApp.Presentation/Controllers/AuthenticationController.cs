@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Hangfire;
+using Microsoft.AspNetCore.Mvc;
+using TodoApp.Presentation.BackgroundJobs;
 using ToDoApp.Application.DTOs;
 using ToDoApp.Application.Interfaces;
+using ToDoApp.Application.Interfaces.BackgroundJob;
 
 namespace TodoApp.Presentation.Controllers
 {
@@ -9,10 +12,12 @@ namespace TodoApp.Presentation.Controllers
     public class AuthenticationController : ControllerBase
     {
         private readonly IAuthentications _authentications;
+        private readonly IAuthenticationBackgroundJob _authenticationBackgroundJob;
 
-        public AuthenticationController(IAuthentications authentications)
+        public AuthenticationController(IAuthentications authentications , IAuthenticationBackgroundJob authenticationBackgroundJob)
         {
             _authentications = authentications;
+            _authenticationBackgroundJob = authenticationBackgroundJob;
         }
 
         [HttpPost("Login")]
@@ -34,8 +39,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpPost("ForgetPassword")]
         public async Task<IActionResult> ForgetPassword(SendOTP dto)
         {
-            await _authentications.SendCodeAsync(dto);
-
+            await _authenticationBackgroundJob.SendCodeAsync(dto);
             return Ok("We will send you a code to reset your password.");
         }
 

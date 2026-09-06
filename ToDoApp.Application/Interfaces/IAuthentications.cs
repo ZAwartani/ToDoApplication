@@ -12,7 +12,6 @@ namespace ToDoApp.Application.Interfaces
         Task<TokenRespone> Login(LoginDto LoginDto);
         Task Logout(LogoutDto LogoutDto);
         Task<string?> ChangePassword(ForgetPasswordOTP ForgetDto);
-        Task<bool> SendCodeAsync(SendOTP SendOTPDto);
         Task<TokenRespone> RefreshTokenAsync(RefreshToken RefreshToken);
         Task<IReadOnlyList<UserListDTO>?> ListOfUserForAdmin();
         Task<bool> CreateAdminUser(RegisterNewUserDto NewUser);

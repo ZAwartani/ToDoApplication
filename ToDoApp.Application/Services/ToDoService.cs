@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using ToDoApp.Application.DTOs;
 using ToDoApp.Application.Interfaces;
+using ToDoApp.Application.Interfaces.BackgroundJobs;
 using ToDoApp.Application.Interfaces.Factory;
 using ToDoApp.Application.Interfaces.Specification;
 using ToDoApp.Domain.Entity;
@@ -16,6 +17,7 @@ namespace ToDoApp.Application.Services
     {
         private readonly ICurrentUser _currentUser;
         private readonly IGenericRepository<ToDoItem, int> _RepoTodo;
+        private readonly ITodoBackgroundJob _TodoBackgroundJob;
         private readonly IGenericRepository<Category, int> _RepoCategory;
         private readonly IGenericRepository<User, int> _RepoUser;
         private readonly ISpecificationBuilderFactory _Factory;
@@ -26,6 +28,7 @@ namespace ToDoApp.Application.Services
             IGenericRepository<Category, int> genericRepositoryCategory,
             IGenericRepository<User, int> genericRepositoryUser,
             ISpecificationBuilderFactory factory,
+            ITodoBackgroundJob todoBackgroundJob,
             ICurrentUser _currentUser
             )
         {
@@ -34,6 +37,7 @@ namespace ToDoApp.Application.Services
             this._RepoCategory = genericRepositoryCategory;
             this._Factory = factory;
             this._RepoUser = genericRepositoryUser;
+            this._TodoBackgroundJob = todoBackgroundJob;
         }
         private int UserId => _currentUser.UserId;
         public async Task<bool> UpdateTodoForUser(UpdateTodoDto UpdateTodoDto, int Id)
@@ -99,6 +103,21 @@ namespace ToDoApp.Application.Services
                 }
             }
             await _RepoTodo.AddAsync(Todo);
+            if(Todo.RecurringSetting != null)
+            {
+                var TodoReturn = new ReturnTodoItem(
+                    Todo.Id,
+                    Todo.Title,
+                    Todo.Description,
+                    Todo.Priority,
+                    Todo.CreatedAt,
+                    Todo.ExpireDate,
+                    Todo.CategoryId,
+                    Todo.IsComplete,
+                    Todo.RecurringSetting
+                );
+                await _TodoBackgroundJob.AddRecurringTodoAsync(TodoReturn);
+            }
             return true;
         }
 
