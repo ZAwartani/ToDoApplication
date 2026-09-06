@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
-using ToDoApp.Domain.Enums;
-using ToDoApp.Domain.Interfaces;
+﻿using Microsoft.AspNetCore.Identity;
 
-namespace ToDoApp.Domain.Entity;
-    public class Role : IEntity<int>
+namespace ToDoApp.Domain.Entity
+{
+    public class Role : IdentityRole<int>
     {
-        [Key]
-        public enumUserRole Id { get; set; }
-        public string RoleName { get; set; }
-        public ICollection<User> Users { get; set; }
+        public Role() { }
+        public Role(string name) : base(name) { }
     }
+}

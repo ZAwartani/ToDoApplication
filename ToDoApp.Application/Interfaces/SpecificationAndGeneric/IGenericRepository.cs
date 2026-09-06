@@ -6,7 +6,7 @@ using ToDoApp.Domain.Interfaces;
 
 namespace ToDoApp.Application.Interfaces.Specification
 {
-    public interface IGenericRepository<TEntity , TKey> where TEntity : IEntity<TKey>
+    public interface IGenericRepository<TEntity , TKey> where TEntity : class , IEntity<TKey>
     {
         Task AddAsync(TEntity entity);
         Task<bool> UpdateAsync(TEntity entity);

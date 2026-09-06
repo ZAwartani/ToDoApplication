@@ -14,13 +14,11 @@ namespace TodoApp.Presentation.Controllers
     public class TodoController : ControllerBase
     {
         private readonly ITodoService _todoService;
-        private readonly ITodoJobs _TodoJobs;
 
 
-        public TodoController(ITodoService todoService , ITodoJobs todoJobs)
+        public TodoController(ITodoService todoService )
         {
             this._todoService = todoService;
-            this._TodoJobs = todoJobs;
         }
 
 
@@ -31,17 +29,7 @@ namespace TodoApp.Presentation.Controllers
                 User.FindFirstValue(ClaimTypes.NameIdentifier)
             );
 
-            var Title = await _TodoJobs.SendEmailReminderForTodo(UserId, dto.Title, dto.ExpireDate);
-
-            var result = await _todoService.Create(
-                dto,
-                UserId,
-                Title
-            );
-
-            await _TodoJobs.MakeRecurringTodo(dto , UserId);
-
-               
+            await _todoService.Create(dto, UserId);   
             return Ok("Created Successfully");
         }
 
@@ -54,19 +42,13 @@ namespace TodoApp.Presentation.Controllers
             int UserId = int.Parse(
                 User.FindFirstValue(ClaimTypes.NameIdentifier)
             );
-            var Title = await _TodoJobs.SendEmailReminderForTodo(UserId, dto.Title, dto.ExpireDate);
-
             var result = await _todoService.Update(
                 dto,
                 id,
-                UserId,
-                Title
+                UserId
             );
-
-
             if (!result)
                 return BadRequest("Todo not found or not yours");
-
 
             return Ok("Updated Successfully");
         }
@@ -89,8 +71,6 @@ namespace TodoApp.Presentation.Controllers
 
             if (!result)
                 return NotFound("Todo not found or not yours");
-
-            await _TodoJobs.RemoveSchedualJob(id);
 
             return Ok("Deleted Successfully");
         }

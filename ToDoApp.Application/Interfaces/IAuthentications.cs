@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using ToDoApp.Application.DTOs;
+using ToDoApp.Domain.Entity;
 
 namespace ToDoApp.Application.Interfaces
 {
