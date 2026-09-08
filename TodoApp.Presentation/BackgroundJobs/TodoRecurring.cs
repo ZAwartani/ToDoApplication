@@ -10,13 +10,16 @@ namespace TodoApp.Presentation.BackgroundJobs
     {
         private readonly IGenericRepository<RecurringTodo, int> _RecurringTodoRepository;
         private readonly ISpecificationBuilderFactory _factory;
+        private readonly ITodoBackgroundJob _todoBackgroundJob;
 
         public TodoRecurring(
             IGenericRepository<RecurringTodo, int> recurringTodoRepository,
-            ISpecificationBuilderFactory factory)
+            ISpecificationBuilderFactory factory,
+            ITodoBackgroundJob todoBackgroundJob)
         {
             _RecurringTodoRepository = recurringTodoRepository;
             _factory = factory;
+            _todoBackgroundJob = todoBackgroundJob;
         }
 
         public async Task EnqueuJobRecurringTodo()
@@ -26,8 +29,7 @@ namespace TodoApp.Presentation.BackgroundJobs
                 var specification = _factory
                     .CreateBuilder<RecurringTodo>()
                     .AddCriteria(x =>
-                        x.OccurrenceDate <= DateTime.Now &&
-                        !x.IsSend)
+                        x.OccurrenceDate <= DateTime.Now)
                     .ApplyOrderBy(x => x.OccurrenceDate)
                     .ApplyPaging(1, 10);
 
@@ -41,18 +43,10 @@ namespace TodoApp.Presentation.BackgroundJobs
 
                 foreach (var recurringTodo in recurringTodos)
                 {
-                    recurringTodo.UpdateSend(true);
-                    await _RecurringTodoRepository.UpdateAsync(recurringTodo);
 
-                    BackgroundJob.Enqueue<ITodoBackgroundJob>(
-                        x => x.ExecuteRecurringTodoAsync(recurringTodo.Id)
-                    );
+                    await _todoBackgroundJob.ExecuteRecurringTodoAsync(recurringTodo.Id);
                 }
-
-                if (recurringTodos.Count < 10)
-                {
-                    break;
-                }
+                await _RecurringTodoRepository.UpdateRangeAsync(recurringTodos);
             }
         }
     }

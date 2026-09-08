@@ -269,11 +269,13 @@ namespace TodoApp.Presentation
             app.MapControllers();
 
             RecurringJob.AddOrUpdate<TodoRecurring>(
-                "enqueue-recurring-todos",
-                job => job.EnqueuJobRecurringTodo(),
-                Cron.MinuteInterval(1)
-            );
+                            "enqueue-recurring-todos",
+                            job => job.EnqueuJobRecurringTodo(),
+                            Cron.MinuteInterval(1)
+                        );
+
             await app.RunAsync();
         }
     }
 }
+

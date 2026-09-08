@@ -16,30 +16,16 @@ namespace ToDoApp.Domain.Entity
         public int TodoId { get; set; }
         public ToDoItem Todo { get; set; }
         public DateTime OccurrenceDate { get; set; }
-        public bool IsSend { get; set; }
-
-        private RecurringTodo()
-        {
-        }
 
         public RecurringTodo(int todoId, DateTime OccurrenceDate)
         {
             this.TodoId = todoId;
             this.OccurrenceDate = OccurrenceDate;
-            this.IsSend = false;
         }
 
         public void UpdateOccurrenceDate(DateTime newOccurrenceDate)
         {
             OccurrenceDate = newOccurrenceDate;
-        }
-
-        public void UpdateSend(bool SendOrnot)
-        {
-            if(SendOrnot)
-                IsSend = SendOrnot;
-            else
-                throw new ArgumentException("IsSend can only be set to true.");
         }
     }
 }

@@ -214,9 +214,6 @@ namespace TodoApp.Presentation.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("IsSend")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime>("OccurrenceDate")
                         .HasColumnType("datetime2");
 

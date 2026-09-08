@@ -62,20 +62,11 @@ namespace ToDoApp.Application.Services
         }
         public async Task<bool> Create(CreateTodoDto Dto)
         {
-            ToDoItem Todo;
+            int? CategoryId;
             if (Dto.CategoryId == null)
             {
-                Todo = new ToDoItem(
-                    Dto.Title,
-                    Dto.Description,
-                    Dto.Priority,
-                    UserId,
-                    Dto.ExpireDate,
-                    null,
-                    Dto.Recurring
-                );
+                 CategoryId = null;
             }
-
             else
             {
 
@@ -87,21 +78,22 @@ namespace ToDoApp.Application.Services
 
                 if (Category != null)
                 {
-                    Todo = new ToDoItem(
-                           Dto.Title,
-                           Dto.Description,
-                           Dto.Priority,
-                           UserId,
-                           Dto.ExpireDate,
-                           Dto.CategoryId,
-                           Dto.Recurring
-                    );
+                    CategoryId = Category.Id;
                 }
                 else
                 {
                     throw new Exception("We have Problem");
                 }
             }
+            var Todo = new ToDoItem(
+                Dto.Title,
+                Dto.Description,
+                Dto.Priority,
+                UserId,
+                Dto.ExpireDate,
+                CategoryId,
+                Dto.Recurring
+            ); 
             await _RepoTodo.AddAsync(Todo);
             if(Todo.RecurringSetting != null)
             {
@@ -123,7 +115,6 @@ namespace ToDoApp.Application.Services
 
         public async Task<IReadOnlyList<ReturnTodoItem>> ListAsync(string? FilterBy, bool Descending)
         {
-
             var Spec = _Factory.CreateBuilder<ToDoItem>()
                 .AddCriteria(x => x.UserId == UserId);
 
