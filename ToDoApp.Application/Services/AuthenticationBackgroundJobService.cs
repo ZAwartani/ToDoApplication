@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
-using ToDoApp.Application.DTOs;
+using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces.BackgroundJob;
 using ToDoApp.Application.Interfaces.Factory;
 using ToDoApp.Application.Interfaces.Specification;
@@ -25,7 +25,7 @@ namespace ToDoApp.Application.Services
             _CodeRepo = CodeRepo;
             _Factory = Factory;
         }
-        public async Task SendCodeAsync(SendOTP sendOTPDto)
+        public async Task SendOTPAsync(SendOTP sendOTPDto)
         {
             var user = await _UserRepo.FindByEmailAsync(sendOTPDto.Email);
 

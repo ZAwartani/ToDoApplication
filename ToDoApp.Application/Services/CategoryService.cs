@@ -1,4 +1,4 @@
-﻿using ToDoApp.Application.DTOs;
+﻿using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces;
 using ToDoApp.Application.Interfaces.Factory;
 using ToDoApp.Application.Interfaces.Specification;
@@ -27,7 +27,7 @@ namespace ToDoApp.Application.Services
             _Factory = factory;
         }
         private int UserId => _CurrentUser.UserId;
-        public Task<bool> CascadeDeleteTodos(int Id , bool DeleteWithAllTodos)
+        public Task<bool> CascadeDeleteTodosAsync(int Id , bool DeleteWithAllTodos)
         {
 
             if(DeleteWithAllTodos)
@@ -40,7 +40,7 @@ namespace ToDoApp.Application.Services
             }
         }
 
-        public async Task<bool> Create(ReturnCategory CategoryDto)
+        public async Task<bool> CreateAsync(ReturnCategory CategoryDto)
         {
 
             var Spec = _Factory.CreateBuilder<User>()
@@ -61,7 +61,7 @@ namespace ToDoApp.Application.Services
             return false;
         }
 
-        public async Task<IReadOnlyList<CategoryAndToDoItemDto>> GetDetails(int CategoryId)
+        public async Task<IReadOnlyList<UserCategory>> GetDetailsAsync(int CategoryId)
         {
 
             var Spec = _Factory.CreateBuilder<Category>()
@@ -72,7 +72,7 @@ namespace ToDoApp.Application.Services
             var Result = await _RepoCategory.ListAsync(Spec);
 
             var Mapped = Result.Select(c =>
-                new CategoryAndToDoItemDto(
+                new UserCategory(
                     c.Id,
                     c.Title,
                     c.ToDoItems.Select(t => new TodoItemDTO(
@@ -81,6 +81,7 @@ namespace ToDoApp.Application.Services
                         t.Description,
                         t.Priority,
                         t.ExpireDate,
+                        UserId,
                         t.IsComplete
                     )).ToList()
                 )
@@ -89,7 +90,7 @@ namespace ToDoApp.Application.Services
             return Mapped;
         }
 
-        public async Task<IReadOnlyList<ListCategoryDto>> List()
+        public async Task<IReadOnlyList<CategoryInfoDto>> ListAsync()
         {
 
             var Result = await _RepoCategory.ListAsync(
@@ -99,7 +100,7 @@ namespace ToDoApp.Application.Services
             );
 
             var Mapped = Result.Select(c =>
-                new ListCategoryDto(
+                new CategoryInfoDto(
                     c.Id,
                     c.Title
                 )
@@ -109,7 +110,7 @@ namespace ToDoApp.Application.Services
         }
 
 
-        public async Task<bool> Update(
+        public async Task<bool> UpdateAsync(
             ReturnCategory CategoryDto,
             int Id)
         {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ToDoApp.Application.DTOs;
+using ToDoApp.Application.Dtos;
 using ToDoApp.Domain.Interfaces;
 
 namespace ToDoApp.Application.Interfaces.Specification

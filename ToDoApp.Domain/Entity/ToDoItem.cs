@@ -61,6 +61,7 @@ namespace ToDoApp.Domain.Entity
             string? description,
             EnumPriority? priority,
             DateTime? expireDate,
+            int UserId,
             int? categoryId,
             EnumRecurring? recurring)
         {

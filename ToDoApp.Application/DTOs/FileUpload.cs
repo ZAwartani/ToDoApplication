@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ToDoApp.Application.DTOs
+namespace ToDoApp.Application.Dtos
 {
     public record FileUploadDTO(IFormFile File, int? TodoId, int? CategoryId);
     public record ReturnToClientFileUploadDTO(int Id, string AddressNameFile, int? TodoId, int? CategoryId);

@@ -1,4 +1,4 @@
-﻿using ToDoApp.Application.DTOs;
+﻿using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces;
 using ToDoApp.Application.Interfaces.BackgroundJobs;
 using ToDoApp.Application.Interfaces.Factory;
@@ -14,18 +14,21 @@ namespace ToDoApp.Application.Services
         private readonly IGenericRepository<ToDoItem, int> _todoRepository;
         private readonly ITodoService _TodoService;
         private readonly ISpecificationBuilderFactory Factory;
+        private readonly ICurrentUser _currentUser;
         public TodoBackgroundJob(IGenericRepository<RecurringTodo , int> RecurringTodoRepository 
             , ISpecificationBuilderFactory specificationBuilderFactory
             , ITodoService  todoService
+            , ICurrentUser currentUser
             , IGenericRepository<ToDoItem, int> todoRepository
             )
         {
+            _currentUser = currentUser;
             _todoRepository = todoRepository;
             _TodoService = todoService;
             _RecurringTodoRepository = RecurringTodoRepository;
             Factory = specificationBuilderFactory;
         }
-
+        private int UserId => _currentUser.UserId;
         public async Task AddRecurringTodoAsync(ReturnTodoItem returnTodoItem)
         {
             var nextOccurrence = returnTodoItem.Recurring switch
@@ -60,12 +63,13 @@ namespace ToDoApp.Application.Services
                 originalTodo.Description,
                 originalTodo.Priority,
                 (DateTime)originalTodo.ExpireDate,
+                UserId,
                 originalTodo.CategoryId,
                 null,
                 EnumCompleteStatus.NotComplete
             );
 
-            await _TodoService.Create(newTodo);
+            await _TodoService.CreateAsync(newTodo);
 
             var nextOccurrence = originalTodo.RecurringSetting switch
             {

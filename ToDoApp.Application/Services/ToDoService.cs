@@ -3,7 +3,7 @@ using MimeKit;
 using Org.BouncyCastle.Crypto.Signers;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
-using ToDoApp.Application.DTOs;
+using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces;
 using ToDoApp.Application.Interfaces.BackgroundJobs;
 using ToDoApp.Application.Interfaces.Factory;
@@ -40,8 +40,9 @@ namespace ToDoApp.Application.Services
             this._TodoBackgroundJob = todoBackgroundJob;
         }
         private int UserId => _currentUser.UserId;
-        public async Task<bool> UpdateTodoForUser(UpdateTodoDto UpdateTodoDto, int Id)
+        public async Task<bool> UpdateTodoForUserAsync(UpdateTodoDto UpdateTodoDto)
         {
+            int Id = UpdateTodoDto.Id;
 
             var ToDo = await _RepoTodo.GetByIdAsync(Id);
 
@@ -53,6 +54,7 @@ namespace ToDoApp.Application.Services
                 UpdateTodoDto.Description,
                 UpdateTodoDto.Priority,
                 UpdateTodoDto.ExpireDate,
+                UserId,
                 UpdateTodoDto.CategoryId,
                 UpdateTodoDto.Recurring
             );
@@ -60,7 +62,7 @@ namespace ToDoApp.Application.Services
             await _RepoTodo.UpdateAsync(ToDo);
             return true;
         }
-        public async Task<bool> Create(CreateTodoDto Dto)
+        public async Task<bool> CreateAsync(CreateTodoDto Dto)
         {
             int? CategoryId;
             if (Dto.CategoryId == null)
@@ -162,11 +164,10 @@ namespace ToDoApp.Application.Services
             return Mapped;
         }
 
-        public async Task<bool> Update(
-            UpdateTodoDto Dto,
-            int Id)
+        public async Task<bool> UpdateAsync(
+            UpdateTodoDto Dto)
         {
-
+            var Id = Dto.Id;
             var ToDo = await _RepoTodo.GetByIdAsync(Id);
 
             if (ToDo == null || ToDo.UserId != UserId)
@@ -177,6 +178,7 @@ namespace ToDoApp.Application.Services
                 Dto.Description,
                 Dto.Priority,
                 Dto.ExpireDate,
+                UserId,
                 Dto.CategoryId,
                 Dto.Recurring
             );
@@ -184,7 +186,7 @@ namespace ToDoApp.Application.Services
             return true;
         } // Checked
 
-        public async Task<bool> Delete(
+        public async Task<bool> DeleteAsync(
             int Id)
         {
 
@@ -202,11 +204,10 @@ namespace ToDoApp.Application.Services
             return true;
         }
 
-        public async Task<bool> MarkAsComplete(
-            MarkAsComplete Dto,
-            int Id)
+        public async Task<bool> MarkAsCompleteAsync(
+            MarkAsComplete Dto)
         {
-
+            var Id = Dto.Id;
             var ToDo = await _RepoTodo
                 .GetByIdAsync(Id);
 

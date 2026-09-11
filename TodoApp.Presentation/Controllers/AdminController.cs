@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Org.BouncyCastle.X509;
 using System.Security.Claims;
-using ToDoApp.Application.DTOs;
+using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces;
 using ToDoApp.Domain.Entity;
 
@@ -27,14 +27,14 @@ namespace TodoApp.Presentation.Controllers
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers()
         {
-            return Ok(await _AdminService.ListOfUserForAdmin());
+            return Ok(await _AdminService.ListOfUserForAdminAsync());
         }
 
 
         [HttpPost("create-user")]
         public async Task<IActionResult> CreateAdminUser(RegisterNewUserDto newUser)
         {
-            var result = await _AdminService.CreateAdminUser(newUser);
+            var result = await _AdminService.CreateAdminUserAsync(newUser);
 
             if (!result)
                 return BadRequest("Cannot create user");
@@ -58,7 +58,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpPut("change-password")]
         public async Task<IActionResult> ChangePassword(AdminRestPasswordUserDto dto)
         {
-            var result = await _AdminService.ChangePasswordUserByAdmin(dto);
+            var result = await _AdminService.ChangePasswordUserByAdminAsync(dto);
 
             if (!result)
                 return BadRequest("Password change failed");
@@ -68,10 +68,10 @@ namespace TodoApp.Presentation.Controllers
 
 
         [HttpPut("update-todo/{id}")]
-        public async Task<IActionResult> UpdateTodo(UpdateTodoDto dto, int id)
+        public async Task<IActionResult> UpdateTodo(UpdateTodoDto dto)
         {
 
-            var result = await _TodoService.UpdateTodoForUser(dto, id);
+            var result = await _TodoService.UpdateTodoForUserAsync(dto);
 
             if (!result)
                 return BadRequest("Todo update failed");
@@ -84,7 +84,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpGet("GetTodoWithCategory/{UserId}/{CategoryId}")]
         public async Task<IActionResult> GetTodoWithCategory(int UserId , int CategoryId)
         {
-            var todo = await _CategoryService.GetDetails(CategoryId);
+            var todo = await _CategoryService.GetDetailsAsync(CategoryId);
 
             if (todo == null)
                 return NotFound("This User Dont Found Or Don't Have TodoItem");

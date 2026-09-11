@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ToDoApp.Application.DTOs;
+using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces;
 
 namespace TodoApp.Presentation.Controllers;
@@ -34,7 +34,7 @@ public class FileUploadController : ControllerBase
     public async Task<IActionResult> GetByTodo(int todoItemId)
     {
         var result = await _fileUploadService
-            .GetFilesByTodoItemIdAsync(todoItemId);
+            .GetByTodoIdAsync(todoItemId);
 
         return Ok(result);
     }
@@ -44,7 +44,7 @@ public class FileUploadController : ControllerBase
     public async Task<IActionResult> GetByCategory(int categoryId)
     {
         var result = await _fileUploadService
-            .GetFilesByCategoryIdAsync(categoryId);
+            .GetByCategoryIdAsync(categoryId);
 
         return Ok(result);
     }

@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using ToDoApp.Application.DTOs;
+using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces.Specification;
 using ToDoApp.Domain.Entity;
 using ToDoApp.Domain.Enums;
@@ -11,13 +11,13 @@ namespace ToDoApp.Application.Interfaces
 {
     public interface ITodoService
     {
-        public Task<bool> Create(CreateTodoDto Dto);
-        public Task<bool> Update(UpdateTodoDto Dto , int Id);
-        public Task<bool> Delete(int Id);
-        public Task<bool> MarkAsComplete(MarkAsComplete Dto , int Id);
+        public Task<bool> CreateAsync(CreateTodoDto Dto);
+        public Task<bool> UpdateAsync(UpdateTodoDto Dto );
+        public Task<bool> DeleteAsync(int Id);
+        public Task<bool> MarkAsCompleteAsync(MarkAsComplete Dto);
         public Task<IReadOnlyList<ReturnTodoItem>> ListAsync(string? FilterBy , bool Descending);
         public Task SendEmailReminderAsync(string Title, DateTime? ExpireDate);
-        public Task<bool> UpdateTodoForUser(UpdateTodoDto UpdateTodoDto, int Id);
+        public Task<bool> UpdateTodoForUserAsync(UpdateTodoDto UpdateTodoDto);
 
     }
 }

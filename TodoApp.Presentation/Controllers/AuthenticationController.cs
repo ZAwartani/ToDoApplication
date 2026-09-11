@@ -1,7 +1,7 @@
 ﻿using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using TodoApp.Presentation.BackgroundJobs;
-using ToDoApp.Application.DTOs;
+using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces;
 using ToDoApp.Application.Interfaces.BackgroundJob;
 
@@ -23,7 +23,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpPost("Login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
-            var result = await _authentications.Login(dto);
+            var result = await _authentications.LoginAsync(dto);
 
             return Ok(result);
         }
@@ -39,14 +39,14 @@ namespace TodoApp.Presentation.Controllers
         [HttpPost("ForgetPassword")]
         public async Task<IActionResult> ForgetPassword(SendOTP dto)
         {
-            await _authenticationBackgroundJob.SendCodeAsync(dto);
+            await _authenticationBackgroundJob.SendOTPAsync(dto);
             return Ok("We will send you a code to reset your password.");
         }
 
         [HttpPost("Reset-Password")]
         public async Task<IActionResult> ResetPassword(ForgetPasswordOTP dto)
         {
-            var result = await _authentications.ChangePassword(dto);
+            var result = await _authentications.ChangePasswordAsync(dto);
 
             return Ok(result);
         }
@@ -62,7 +62,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpPost("Logout")]
         public async Task<IActionResult> Logout(LogoutDto dto)
         {
-            await _authentications.Logout(dto);
+            await _authentications.LogoutAsync(dto);
 
             return Ok(new
             {

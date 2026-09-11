@@ -7,7 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using ToDoApp.Application.DTOs;
+using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces;
 using ToDoApp.Application.Interfaces.BackgroundJob;
 using ToDoApp.Application.Interfaces.Factory;
@@ -38,7 +38,7 @@ namespace ToDoApp.Application.Services
             _Configuration = configuration;
         }
 
-        public async Task<bool> ChangePasswordUserByAdmin(AdminRestPasswordUserDto adminRestPasswordUserDto)
+        public async Task<bool> ChangePasswordUserByAdminAsync(AdminRestPasswordUserDto adminRestPasswordUserDto)
         {
             var user = await _UserRepo.FindByEmailAsync(adminRestPasswordUserDto.Email);
 
@@ -55,7 +55,7 @@ namespace ToDoApp.Application.Services
             return result.Succeeded;
         }
 
-        public async Task<IReadOnlyList<UserListDTO>> ListOfUserForAdmin()
+        public async Task<IReadOnlyList<UserListDTO>> ListOfUserForAdminAsync()
         {
             var users = _UserRepo.Users
                 .Select(x => new UserListDTO(x.Id, x.Email!))
@@ -64,7 +64,7 @@ namespace ToDoApp.Application.Services
             return await Task.FromResult(users);
         }
 
-        public async Task<bool> CreateAdminUser(RegisterNewUserDto newUser)
+        public async Task<bool> CreateAdminUserAsync(RegisterNewUserDto newUser)
         {
             var existingUser = await _UserRepo.FindByEmailAsync(newUser.Email);
 
@@ -136,7 +136,7 @@ namespace ToDoApp.Application.Services
             }
         }
 
-        public async Task<TokenRespone?> Login(LoginDto loginDto)
+        public async Task<TokenRespone?> LoginAsync(LoginDto loginDto)
         {
             var user = await _UserRepo.FindByEmailAsync(loginDto.Email);
 
@@ -167,7 +167,7 @@ namespace ToDoApp.Application.Services
             return await GenerateAndSaveTokensAsync(user);
         }
 
-        public async Task Logout(LogoutDto logoutDto)
+        public async Task LogoutAsync(LogoutDto logoutDto)  
         {
             var user = await _UserRepo.FindByEmailAsync(logoutDto.Email);
 
@@ -190,7 +190,7 @@ namespace ToDoApp.Application.Services
             await _TokenRepo.UpdateAsync(userToken);
         }
 
-        public async Task<string?> ChangePassword(ForgetPasswordOTP forgetDto)
+        public async Task<string?> ChangePasswordAsync(ForgetPasswordOTP forgetDto)
         {
             var user = await _UserRepo.FindByEmailAsync(forgetDto.Email);
 

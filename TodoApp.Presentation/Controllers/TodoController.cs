@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using ToDoApp.Application.DTOs;
+using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces;
 using ToDoApp.Domain.Enums;
 
@@ -25,7 +25,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpPost("Create")]
         public async Task<IActionResult> Create(CreateTodoDto dto)
         {
-            await _todoService.Create(dto);   
+            await _todoService.CreateAsync(dto);   
             return Ok("Created Successfully");
         }
 
@@ -35,9 +35,8 @@ namespace TodoApp.Presentation.Controllers
             int id,
             UpdateTodoDto dto)
         {
-            var result = await _todoService.Update(
-                dto,
-                id
+            var result = await _todoService.UpdateAsync(
+                dto
             );
             if (!result)
                 return BadRequest("Todo not found or not yours");
@@ -53,7 +52,7 @@ namespace TodoApp.Presentation.Controllers
         public async Task<IActionResult> Delete(int id)
         {
 
-            var result = await _todoService.Delete(
+            var result = await _todoService.DeleteAsync(
                 id
             );
 
@@ -68,9 +67,8 @@ namespace TodoApp.Presentation.Controllers
             int id,
             MarkAsComplete dto)
         {
-            var result = await _todoService.MarkAsComplete(
-                dto,
-                id
+            var result = await _todoService.MarkAsCompleteAsync(
+                dto
             );
 
             if (!result)

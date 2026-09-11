@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Security.Cryptography.Pkcs;
-using ToDoApp.Application.DTOs;
+using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces;
 using ToDoApp.Application.Services;
 using ToDoApp.Domain.Enums;
@@ -27,7 +27,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpPost("CreateCategory")]
         public async Task<IActionResult> CreateCategory(ReturnCategory dto)
         {
-            var Result = await _CategoryService.Create(dto);
+            var Result = await _CategoryService.CreateAsync(dto);
             if (Result)
             {
                 return Ok("Created Sucessful");
@@ -43,7 +43,7 @@ namespace TodoApp.Presentation.Controllers
             int Id,
             ReturnCategory dto)
         {
-            var Result = await _CategoryService.Update
+            var Result = await _CategoryService.UpdateAsync
                 (dto, Id);
             
             if (Result)
@@ -60,14 +60,14 @@ namespace TodoApp.Presentation.Controllers
         public async Task<IActionResult> Remove
             (int Id , bool RemoveTodoItems)
         {
-            var result = await _CategoryService.CascadeDeleteTodos(Id, RemoveTodoItems);
+            var result = await _CategoryService.CascadeDeleteTodosAsync(Id, RemoveTodoItems);
             return Ok();
         }
 
         [HttpGet("GetMyCategoryWithTodo")]
         public async Task<IActionResult> GetMyCategoryWithTodo(int CategoryId)
         {
-            var Result = await _CategoryService.GetDetails(CategoryId);
+            var Result = await _CategoryService.GetDetailsAsync(CategoryId);
 
             return Ok(Result);
         }
@@ -76,7 +76,7 @@ namespace TodoApp.Presentation.Controllers
         public async Task<IActionResult> ListCategories()
         {
             int UserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var result = await _CategoryService.List();
+            var result = await _CategoryService.ListAsync();
             return Ok(result);
         }
     }

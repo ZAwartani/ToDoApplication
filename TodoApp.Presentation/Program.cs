@@ -10,7 +10,7 @@ using TodoApp.Presentation.Identity;
 using TodoApp.Presentation.Persistence;
 using TodoApp.Presentation.Repositories;
 using TodoApp.Presentation.Service;
-using ToDoApp.Application.Concreate.Factoryes;
+using ToDoApp.Application.Concreate.Factories;
 using ToDoApp.Application.Interfaces;
 using ToDoApp.Application.Interfaces.BackgroundJob;
 using ToDoApp.Application.Interfaces.BackgroundJobs;

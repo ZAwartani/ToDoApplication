@@ -1,4 +1,4 @@
-﻿namespace ToDoApp.Application.DTOs
+﻿namespace ToDoApp.Application.Dtos
 {
     public record LoginDto(string Email , string Password);
     public record RegisterNewUserDto(string UserName, string Email, string Password);

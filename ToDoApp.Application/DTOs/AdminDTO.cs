@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ToDoApp.Application.DTOs
+namespace ToDoApp.Application.Dtos
 {
     public record AdminRestPasswordUserDto(string Email, string Password);
     public record UserListDTO(int Id, string Email);

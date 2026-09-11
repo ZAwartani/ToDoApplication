@@ -1,4 +1,4 @@
-﻿using ToDoApp.Application.DTOs;
+﻿using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces;
 using ToDoApp.Application.Interfaces.Factory;
 using ToDoApp.Application.Interfaces.Specification;
@@ -81,7 +81,7 @@ namespace ToDoApp.Application.Services
             return await _FileStorage.DownloadFileAsync(file.Path);
         }
 
-        public async Task<IReadOnlyList<ReturnToClientFileUploadDTO>> GetFilesByCategoryIdAsync(int categoryId)
+        public async Task<IReadOnlyList<ReturnToClientFileUploadDTO>> GetByCategoryIdAsync(int categoryId)
         {
             var specification = _Factory
                 .CreateBuilder<FilesUpload>()
@@ -99,7 +99,7 @@ namespace ToDoApp.Application.Services
             )).ToList();
         }
 
-        public async Task<IReadOnlyList<ReturnToClientFileUploadDTO>> GetFilesByTodoItemIdAsync(int todoItemId)
+        public async Task<IReadOnlyList<ReturnToClientFileUploadDTO>> GetByTodoIdAsync(int todoItemId)
         {
             var specification = _Factory
                 .CreateBuilder<FilesUpload>()
@@ -170,5 +170,6 @@ namespace ToDoApp.Application.Services
                 file.CategoryId
             );
         }
+
     }
 }

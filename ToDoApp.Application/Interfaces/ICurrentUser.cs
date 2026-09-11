@@ -7,8 +7,8 @@ namespace ToDoApp.Application.Interfaces
     public interface ICurrentUser
     {
         public int UserId { get;}
-        string? Email { get; }
-        string? Role { get; }
+        string Email { get; }
+        string Role { get; }
         bool IsAuthenticated { get; }
 
         bool IsInRole(string role);
