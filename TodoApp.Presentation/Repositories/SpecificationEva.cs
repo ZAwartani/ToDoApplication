@@ -30,6 +30,11 @@ namespace TodoApp.Presentation.Repositories
                     Query = Query.OrderByDescending(specification.OrderBy);
                 }
             }
+
+            if(specification.IsPagging)
+            {
+                Query = Query.Skip(specification.Skip).Take(specification.Take);
+            }
             return Query;
         }
     }
