@@ -1,0 +1,194 @@
+﻿using ToDoApp.Application.Dtos;
+using ToDoApp.Application.Interfaces;
+using ToDoApp.Application.Interfaces.Factory;
+using ToDoApp.Application.Interfaces.Specification;
+using ToDoApp.Domain.Entity;
+
+namespace ToDoApp.Application.Services
+{
+    public class CategoryService : ICategoryService
+    {
+        private readonly ICurrentUser _CurrentUser;
+        private readonly IGenericRepository<Category, int> _RepoCategory;
+        private readonly IGenericRepository<ToDoItem, int> _RepoTodo;
+        private readonly IGenericRepository<User, int> _RepoUser;
+        private readonly ISpecificationBuilderFactory _Factory;
+        public CategoryService(
+            ICurrentUser currentUser,
+            IGenericRepository<Category, int> CategoryRepository,
+            IGenericRepository<ToDoItem, int> TodoRepository,
+            IGenericRepository<User,int> UserRepository,
+            ISpecificationBuilderFactory factory)
+        {
+            _CurrentUser = currentUser;
+            _RepoCategory = CategoryRepository;
+            _RepoTodo = TodoRepository;
+            _RepoUser = UserRepository;
+            _Factory = factory;
+        }
+        private int UserId => _CurrentUser.Id;
+        public Task<bool> DeleteAsync(int Id , bool DeleteWithAllTodos)
+        {
+
+            if(DeleteWithAllTodos)
+            {
+                return DeleteWithAllTodo(Id, UserId);
+            }
+            else
+            {
+                return DeleteWithoutTodo(Id, UserId);
+            }
+        }
+
+        public async Task<bool> CreateAsync(UserCategoryDto CategoryDto)
+        {
+
+            var Spec = _Factory.CreateBuilder<User>()
+                .AddCriteria(x => x.Id== UserId);
+
+            var Result = await _RepoUser.GetAsync(Spec);
+
+            if (Result != null)
+            {
+                var NewCategory = new Category(
+                     CategoryDto.Title,
+                     UserId
+                );
+                await _RepoCategory.AddAsync(NewCategory);
+
+                return true;
+            }
+            return false;
+        }
+
+        public async Task<IReadOnlyList<CategoryWithTodosDto>> GetDetailsAsync(int CategoryId)
+        {
+
+            var Spec = _Factory.CreateBuilder<Category>()
+                .AddCriteria(c => c.UserId == UserId)
+                .AddCriteria(c => c.Id == CategoryId)
+                .AddInclude(c => c.ToDoItems);
+                
+            var Result = await _RepoCategory.ListAsync(Spec);
+
+            var Mapped = Result.Select(c =>
+                new CategoryWithTodosDto(
+                    c.Id,
+                    c.Title,
+                    c.ToDoItems.Select(t => new TodoItemDto(
+                        t.Id,
+                        t.Title,
+                        t.Description,
+                        t.Priority,
+                        t.ExpireDate,
+                        UserId,
+                        t.IsComplete
+                    )).ToList()
+                )
+            ).ToList();
+
+            return Mapped;
+        }
+
+        public async Task<IReadOnlyList<CategoryInfoDto>> ListAsync()
+        {
+
+            var Result = await _RepoCategory.ListAsync(
+                _Factory.CreateBuilder<Category>()
+                .AddCriteria(c => c.UserId == UserId)
+                .ApplyOrderBy(c => c.Title)
+            );
+
+            var Mapped = Result.Select(c =>
+                new CategoryInfoDto(
+                    c.Id,
+                    c.Title
+                )
+            ).ToList();
+
+            return Mapped;
+        }
+
+
+        public async Task<bool> UpdateAsync(
+            UserCategoryDto CategoryDto,
+            int Id)
+        {
+
+            var Spec = _Factory.CreateBuilder<Category>()
+                .AddCriteria(c => c.UserId == UserId);
+
+            var Category = await _RepoCategory
+                .GetAsync(Spec);
+            
+            if (Category == null)
+                return false;
+
+            Category.UpdateTitle(
+                CategoryDto.Title
+            );
+
+            await _RepoCategory.UpdateAsync(Category);
+
+            return true;
+        }
+
+        private async Task<bool> DeleteWithAllTodo(int Id , int UserId)
+        {
+            var SpecCategory = _Factory.CreateBuilder<Category>()
+                .AddCriteria(x => x.UserId == UserId)
+                .AddCriteria(x => x.Id == Id);
+
+            var Category = await _RepoCategory.GetAsync(SpecCategory);
+
+            if (Category == null)
+                throw new Exception("We Have Problem To Remove It");
+            
+            var Spec = _Factory.CreateBuilder<ToDoItem>()
+                .AddCriteria(t => t.UserId == UserId)
+                .AddCriteria(t => t.CategoryId == Id);
+
+            var ToDos = await _RepoTodo.ListAsync(Spec);
+
+            if (ToDos.Any())
+            {
+                await _RepoTodo.UpdateRangeAsync(ToDos);
+            }
+
+            await _RepoCategory.DeleteAsync(Id);
+            return true;
+        }
+        private async Task<bool> DeleteWithoutTodo(int Id , int UserId)
+        {
+            var SpecCategory = _Factory.CreateBuilder<Category>()
+                 .AddCriteria(x => x.UserId == UserId)
+                 .AddCriteria(x => x.Id == Id);
+            
+            var Category = await _RepoCategory.GetAsync(SpecCategory);
+
+            if (Category == null)
+                throw new Exception("We Have Problem To Remove It");
+
+
+            var Spec = _Factory.CreateBuilder<ToDoItem>()
+                .AddCriteria(t => t.UserId == UserId)
+                .AddCriteria(t => t.CategoryId == Id);
+
+            var ToDos = await _RepoTodo.ListAsync(Spec);
+
+            foreach (var todo in ToDos)
+            {
+                todo.CategoryId = null;
+            }
+
+            if (ToDos.Any())
+            {
+                await _RepoTodo.UpdateRangeAsync(ToDos);
+            }
+
+            await _RepoCategory.DeleteAsync(Id);
+
+            return true;
+        }
+    }
+}
