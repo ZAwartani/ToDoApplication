@@ -9,3 +9,4 @@ namespace ToDoApp.Application.Dtos
     public record ReturnToClientFileUploadDTO(int Id, string AddressNameFile, int? TodoId, int? CategoryId);
     public record DeleteFileDTO(int FileId);
 }
+   

@@ -9,3 +9,4 @@ namespace ToDoApp.Application.Dtos
     public record UserCategory(int Id, string TitleCategory , ICollection<TodoItemDTO>? Item);
     public record ReturnCategory(string Title , int UserId);
 }
+     

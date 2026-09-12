@@ -41,7 +41,7 @@ namespace ToDoApp.Application.Dtos
         int? CategoryId,
         EnumRecurring? Recurring,
         EnumCompleteStatus? IsCompleted
-    );
+    );       
 
 
     public record MarkAsComplete(
