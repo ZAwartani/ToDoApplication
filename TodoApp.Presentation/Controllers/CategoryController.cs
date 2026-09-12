@@ -25,7 +25,7 @@ namespace TodoApp.Presentation.Controllers
         }
 
         [HttpPost("CreateCategory")]
-        public async Task<IActionResult> CreateCategory(ReturnCategory dto)
+        public async Task<IActionResult> CreateCategory(UserCategoryDto dto)
         {
             var Result = await _CategoryService.CreateAsync(dto);
             if (Result)
@@ -41,7 +41,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpPut("UpdateCategory/{Id}")]
         public async Task<IActionResult> Update(
             int Id,
-            ReturnCategory dto)
+            UserCategoryDto dto)
         {
             var Result = await _CategoryService.UpdateAsync
                 (dto, Id);
@@ -60,7 +60,7 @@ namespace TodoApp.Presentation.Controllers
         public async Task<IActionResult> Remove
             (int Id , bool RemoveTodoItems)
         {
-            var result = await _CategoryService.CascadeDeleteTodosAsync(Id, RemoveTodoItems);
+            var result = await _CategoryService.DeleteAsync(Id, RemoveTodoItems);
             return Ok();
         }
 

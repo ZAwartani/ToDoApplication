@@ -28,8 +28,8 @@ namespace ToDoApp.Application.Services
             _RecurringTodoRepository = RecurringTodoRepository;
             Factory = specificationBuilderFactory;
         }
-        private int UserId => _currentUser.UserId;
-        public async Task AddRecurringTodoAsync(ReturnTodoItem returnTodoItem)
+        private int UserId => _currentUser.Id;
+        public async Task AddRecurringTodoAsync(ReturnTodoItemDto returnTodoItem)
         {
             var nextOccurrence = returnTodoItem.Recurring switch
             {

@@ -25,7 +25,7 @@ namespace ToDoApp.Application.Services
             _CodeRepo = CodeRepo;
             _Factory = Factory;
         }
-        public async Task SendOTPAsync(SendOTP sendOTPDto)
+        public async Task SendOTPAsync(SendOTPDto sendOTPDto)
         {
             var user = await _UserRepo.FindByEmailAsync(sendOTPDto.Email);
 

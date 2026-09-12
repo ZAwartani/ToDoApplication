@@ -6,7 +6,7 @@ using ToDoApp.Domain.Entity;
 namespace ToDoApp.Application.Dtos
 {
     public record CategoryInfoDto(int Id , string TitleCategory);
-    public record UserCategory(int Id, string TitleCategory , ICollection<TodoItemDTO>? Item);
-    public record ReturnCategory(string Title , int UserId);
+    public record CategoryWithTodosDto(int Id, string TitleCategory , ICollection<TodoItemDto>? Item);
+    public record UserCategoryDto(string Title , int UserId);
 }
      

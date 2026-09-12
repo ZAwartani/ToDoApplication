@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Text;
+﻿using System.Linq.Expressions;
 using ToDoApp.Application.Interfaces.Specification;
 
-namespace ToDoApp.Application.Concreate.Specification
+namespace ToDoApp.Application.Concrete.Specification
 {
     public class BaseSpecificationBuilder<TEntity> : ISpecification<TEntity>
     {

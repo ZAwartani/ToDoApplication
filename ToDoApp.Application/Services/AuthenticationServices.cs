@@ -55,10 +55,10 @@ namespace ToDoApp.Application.Services
             return result.Succeeded;
         }
 
-        public async Task<IReadOnlyList<UserListDTO>> ListOfUserForAdminAsync()
+        public async Task<IReadOnlyList<UserListDto>?> ListUserAsync()
         {
             var users = _UserRepo.Users
-                .Select(x => new UserListDTO(x.Id, x.Email!))
+                .Select(x => new UserListDto(x.Id, x.Email!))
                 .ToList();
 
             return await Task.FromResult(users);
@@ -136,7 +136,7 @@ namespace ToDoApp.Application.Services
             }
         }
 
-        public async Task<TokenRespone?> LoginAsync(LoginDto loginDto)
+        public async Task<TokenResponeDto?> LoginAsync(LoginDto loginDto)
         {
             var user = await _UserRepo.FindByEmailAsync(loginDto.Email);
 
@@ -190,7 +190,7 @@ namespace ToDoApp.Application.Services
             await _TokenRepo.UpdateAsync(userToken);
         }
 
-        public async Task<string?> ChangePasswordAsync(ForgetPasswordOTP forgetDto)
+        public async Task<string?> ChangePasswordAsync(ForgetPasswordOTPDto forgetDto)
         {
             var user = await _UserRepo.FindByEmailAsync(forgetDto.Email);
 
@@ -230,8 +230,8 @@ namespace ToDoApp.Application.Services
 
         
 
-        public async Task<TokenRespone?> RefreshTokenAsync(
-            RefreshToken refreshToken)
+        public async Task<TokenResponeDto?> RefreshTokenAsync(
+            RefreshTokenDto refreshToken)
         {
             var tokenSpec = _Factory.CreateBuilder<Token>()
                 .AddCriteria(t => t.User.Email == refreshToken.Email)
@@ -259,7 +259,7 @@ namespace ToDoApp.Application.Services
             return await GenerateAndSaveTokensAsync(user);
         }
 
-        private async Task<TokenRespone> GenerateAndSaveTokensAsync(User user)
+        private async Task<TokenResponeDto> GenerateAndSaveTokensAsync(User user)
         {
             var utcNow = DateTime.UtcNow;
 
@@ -320,7 +320,7 @@ namespace ToDoApp.Application.Services
 
             await _TokenRepo.AddAsync(userToken);
 
-            return new TokenRespone(
+            return new TokenResponeDto(
                 accessToken,
                 rawRefreshToken);
         }

@@ -39,7 +39,7 @@ namespace ToDoApp.Application.Services
             this._RepoUser = genericRepositoryUser;
             this._TodoBackgroundJob = todoBackgroundJob;
         }
-        private int UserId => _currentUser.UserId;
+        private int UserId => _currentUser.Id;
         public async Task<bool> UpdateTodoForUserAsync(UpdateTodoDto UpdateTodoDto)
         {
             int Id = UpdateTodoDto.Id;
@@ -99,7 +99,7 @@ namespace ToDoApp.Application.Services
             await _RepoTodo.AddAsync(Todo);
             if(Todo.RecurringSetting != null)
             {
-                var TodoReturn = new ReturnTodoItem(
+                var TodoReturn = new ReturnTodoItemDto(
                     Todo.Id,
                     Todo.Title,
                     Todo.Description,
@@ -115,7 +115,7 @@ namespace ToDoApp.Application.Services
             return true;
         }
 
-        public async Task<IReadOnlyList<ReturnTodoItem>> ListAsync(string? FilterBy, bool Descending)
+        public async Task<IReadOnlyList<ReturnTodoItemDto>> ListAsync(string? FilterBy, bool Descending)
         {
             var Spec = _Factory.CreateBuilder<ToDoItem>()
                 .AddCriteria(x => x.UserId == UserId);
@@ -149,7 +149,7 @@ namespace ToDoApp.Application.Services
             if (Result == null ||  Result.Count == 0)
                 throw new Exception("User doesn't have any TodoItems");
 
-            var Mapped = Result.Select(x => new ReturnTodoItem(
+            var Mapped = Result.Select(x => new ReturnTodoItemDto(
                 x.Id,
                 x.Title,
                 x.Description,
@@ -205,7 +205,7 @@ namespace ToDoApp.Application.Services
         }
 
         public async Task<bool> MarkAsCompleteAsync(
-            MarkAsComplete Dto)
+            MarkAsCompleteDto Dto)
         {
             var Id = Dto.Id;
             var ToDo = await _RepoTodo

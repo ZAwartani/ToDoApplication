@@ -5,8 +5,6 @@ namespace TodoApp.Presentation.Service
 {
     public class CurrentUser : ICurrentUser
     {
-        
-
         private readonly IHttpContextAccessor _httpContextAccessor;
         
         public CurrentUser(IHttpContextAccessor httpContextAccessor)
@@ -15,7 +13,7 @@ namespace TodoApp.Presentation.Service
         }
         private ClaimsPrincipal? User =>
         _httpContextAccessor.HttpContext?.User;
-        public int UserId
+        public int Id
         {
             get
             {
@@ -31,18 +29,18 @@ namespace TodoApp.Presentation.Service
             }
         }
 
-        public string? Email =>
-              User?.FindFirstValue(ClaimTypes.Email);
+        public string Email =>
+              User.FindFirstValue(ClaimTypes.Email);
 
-        public string? Role =>
-            User?.FindFirstValue(ClaimTypes.Role);
+        public string Role =>
+            User.FindFirstValue(ClaimTypes.Role);
 
         public bool IsAuthenticated =>
-            User?.Identity?.IsAuthenticated ?? false;
+            User.Identity?.IsAuthenticated ?? false;
 
         public bool IsInRole(string role)
         {
-            return User?.IsInRole(role) ?? false;
+            return User.IsInRole(role);
         }
     }
 }

@@ -10,18 +10,18 @@ namespace TodoApp.Presentation.Controllers;
 [Authorize(Roles ="User")]
 public class FileUploadController : ControllerBase
 {
-    private readonly IFileUploadService _fileUploadService;
+    private readonly IFileService _fileUploadService;
 
-    public FileUploadController(IFileUploadService fileUploadService)
+    public FileUploadController(IFileService fileUploadService)
     {
         _fileUploadService = fileUploadService;
     }
 
 
-    [HttpPost("upload")]
-    public async Task<IActionResult> Upload([FromForm] FileUploadDTO dto)
+    [HttpPost("UploadTodo")]
+    public async Task<IActionResult> UploadTodo([FromForm] FileUploadTodoItemDto dto)
     {
-        var result = await _fileUploadService.UploadAsync(dto);
+        var result = await _fileUploadService.UploadTodoItemAsync(dto);
 
         if (result == null)
             return BadRequest("File upload failed");
@@ -29,6 +29,16 @@ public class FileUploadController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("UploadCategory")]
+    public async Task<IActionResult> UploadCategory([FromForm] FileUploadCategoryDto dto)
+    {
+        var result = await _fileUploadService.UploadCategoryAsync(dto);
+
+        if (result == null)
+            return BadRequest("File upload failed");
+
+        return Ok(result);
+    }
 
     [HttpGet("todo/{todoItemId}")]
     public async Task<IActionResult> GetByTodo(int todoItemId)
@@ -70,9 +80,9 @@ public class FileUploadController : ControllerBase
             return NotFound("File not found");
 
         return File(
-            file.Value.Content,
-            file.Value.ContentType,
-            file.Value.FileName
+            file.Content,
+            file.ContentType,
+            file.FileName
         );
     }
 }

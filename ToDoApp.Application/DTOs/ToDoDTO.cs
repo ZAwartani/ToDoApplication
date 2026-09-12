@@ -6,7 +6,7 @@ using ToDoApp.Domain.Enums;
 
 namespace ToDoApp.Application.Dtos
 {
-    public record ReturnTodoItem(
+    public record ReturnTodoItemDto(
     int Id,
     string Title,
     string Description,
@@ -44,13 +44,13 @@ namespace ToDoApp.Application.Dtos
     );       
 
 
-    public record MarkAsComplete(
+    public record MarkAsCompleteDto(
         int Id,
         int UserId,
         bool IsComplete
     );
 
-    public record TodoItemDTO
+    public record TodoItemDto
     (
         int Id,
         string Title,

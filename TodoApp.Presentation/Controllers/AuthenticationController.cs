@@ -37,14 +37,14 @@ namespace TodoApp.Presentation.Controllers
         }
 
         [HttpPost("ForgetPassword")]
-        public async Task<IActionResult> ForgetPassword(SendOTP dto)
+        public async Task<IActionResult> ForgetPassword(SendOTPDto dto)
         {
             await _authenticationBackgroundJob.SendOTPAsync(dto);
             return Ok("We will send you a code to reset your password.");
         }
 
         [HttpPost("Reset-Password")]
-        public async Task<IActionResult> ResetPassword(ForgetPasswordOTP dto)
+        public async Task<IActionResult> ResetPassword(ForgetPasswordOTPDto dto)
         {
             var result = await _authentications.ChangePasswordAsync(dto);
 
@@ -52,7 +52,7 @@ namespace TodoApp.Presentation.Controllers
         }
 
         [HttpPost("RefreshToken")]
-        public async Task<IActionResult> RefreshToken(RefreshToken dto)
+        public async Task<IActionResult> RefreshToken(RefreshTokenDto dto)
         {
             var result = await _authentications.RefreshTokenAsync(dto);
 

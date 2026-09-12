@@ -27,7 +27,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers()
         {
-            return Ok(await _AdminService.ListOfUserForAdminAsync());
+            return Ok(await _AdminService.ListUserAsync());
         }
 
 

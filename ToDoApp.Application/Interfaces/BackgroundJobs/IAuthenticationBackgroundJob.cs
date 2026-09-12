@@ -7,6 +7,6 @@ namespace ToDoApp.Application.Interfaces.BackgroundJob
 {
     public interface IAuthenticationBackgroundJob
     {
-        public Task SendOTPAsync(SendOTP SendOTPDto);
+        public Task SendOTPAsync(SendOTPDto SendOTPDto);
     }
 }

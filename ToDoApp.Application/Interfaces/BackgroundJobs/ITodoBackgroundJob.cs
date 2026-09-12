@@ -8,7 +8,7 @@ namespace ToDoApp.Application.Interfaces.BackgroundJobs
 {
     public interface ITodoBackgroundJob
     {
-        public Task AddRecurringTodoAsync(ReturnTodoItem ReturnTodoItem);
-        public Task ExecuteRecurringTodoAsync(int recurringTodoId);
+        public Task AddRecurringTodoAsync(ReturnTodoItemDto ReturnTodoItem);
+        public Task ExecuteRecurringTodoAsync(int Id);
     }
 }

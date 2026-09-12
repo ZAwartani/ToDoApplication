@@ -26,8 +26,8 @@ namespace ToDoApp.Application.Services
             _RepoUser = UserRepository;
             _Factory = factory;
         }
-        private int UserId => _CurrentUser.UserId;
-        public Task<bool> CascadeDeleteTodosAsync(int Id , bool DeleteWithAllTodos)
+        private int UserId => _CurrentUser.Id;
+        public Task<bool> DeleteAsync(int Id , bool DeleteWithAllTodos)
         {
 
             if(DeleteWithAllTodos)
@@ -40,7 +40,7 @@ namespace ToDoApp.Application.Services
             }
         }
 
-        public async Task<bool> CreateAsync(ReturnCategory CategoryDto)
+        public async Task<bool> CreateAsync(UserCategoryDto CategoryDto)
         {
 
             var Spec = _Factory.CreateBuilder<User>()
@@ -61,7 +61,7 @@ namespace ToDoApp.Application.Services
             return false;
         }
 
-        public async Task<IReadOnlyList<UserCategory>> GetDetailsAsync(int CategoryId)
+        public async Task<IReadOnlyList<CategoryWithTodosDto>> GetDetailsAsync(int CategoryId)
         {
 
             var Spec = _Factory.CreateBuilder<Category>()
@@ -72,10 +72,10 @@ namespace ToDoApp.Application.Services
             var Result = await _RepoCategory.ListAsync(Spec);
 
             var Mapped = Result.Select(c =>
-                new UserCategory(
+                new CategoryWithTodosDto(
                     c.Id,
                     c.Title,
-                    c.ToDoItems.Select(t => new TodoItemDTO(
+                    c.ToDoItems.Select(t => new TodoItemDto(
                         t.Id,
                         t.Title,
                         t.Description,
@@ -111,7 +111,7 @@ namespace ToDoApp.Application.Services
 
 
         public async Task<bool> UpdateAsync(
-            ReturnCategory CategoryDto,
+            UserCategoryDto CategoryDto,
             int Id)
         {
 

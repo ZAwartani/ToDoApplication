@@ -5,8 +5,10 @@ using System.Text;
 
 namespace ToDoApp.Application.Dtos
 {
-    public record FileUploadDTO(IFormFile File, int? TodoId, int? CategoryId);
-    public record ReturnToClientFileUploadDTO(int Id, string AddressNameFile, int? TodoId, int? CategoryId);
-    public record DeleteFileDTO(int FileId);
+    public record FileUploadTodoItemDto(IFormFile File, int Id);
+    public record FileUploadCategoryDto(IFormFile File, int Id);
+    public record FileClient(int Id, string AddressNameFile);
+    public record DeleteFileDto(int FileId);
+    public record DownloadFileDto(byte[] Content, string ContentType, string FileName);
 }
    

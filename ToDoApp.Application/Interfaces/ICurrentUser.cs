@@ -6,7 +6,7 @@ namespace ToDoApp.Application.Interfaces
 {
     public interface ICurrentUser
     {
-        public int UserId { get;}
+        public int Id { get;}
         string Email { get; }
         string Role { get; }
         bool IsAuthenticated { get; }

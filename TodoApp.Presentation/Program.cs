@@ -10,7 +10,7 @@ using TodoApp.Presentation.Identity;
 using TodoApp.Presentation.Persistence;
 using TodoApp.Presentation.Repositories;
 using TodoApp.Presentation.Service;
-using ToDoApp.Application.Concreate.Factories;
+using ToDoApp.Application.Concrete.Factories;
 using ToDoApp.Application.Interfaces;
 using ToDoApp.Application.Interfaces.BackgroundJob;
 using ToDoApp.Application.Interfaces.BackgroundJobs;
@@ -83,7 +83,7 @@ namespace TodoApp.Presentation
             builder.Services.AddScoped<ICategoryService, CategoryService>();
 
             builder.Services.AddScoped<ITodoService, ToDoService>();
-            builder.Services.AddScoped<IFileUploadService, FileUploadService>();
+            builder.Services.AddScoped<IFileService, FileUploadService>();
             builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
             builder.Services.AddSingleton<ISpecificationBuilderFactory, SpeificationBuilderFactory>();
 

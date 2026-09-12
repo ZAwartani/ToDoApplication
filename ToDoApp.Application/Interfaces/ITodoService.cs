@@ -14,8 +14,8 @@ namespace ToDoApp.Application.Interfaces
         public Task<bool> CreateAsync(CreateTodoDto Dto);
         public Task<bool> UpdateAsync(UpdateTodoDto Dto );
         public Task<bool> DeleteAsync(int Id);
-        public Task<bool> MarkAsCompleteAsync(MarkAsComplete Dto);
-        public Task<IReadOnlyList<ReturnTodoItem>> ListAsync(string? FilterBy , bool Descending);
+        public Task<bool> MarkAsCompleteAsync(MarkAsCompleteDto Dto);
+        public Task<IReadOnlyList<ReturnTodoItemDto>> ListAsync(string? FilterBy , bool Descending);
         public Task SendEmailReminderAsync(string Title, DateTime? ExpireDate);
         public Task<bool> UpdateTodoForUserAsync(UpdateTodoDto UpdateTodoDto);
 

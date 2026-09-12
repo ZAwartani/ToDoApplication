@@ -65,7 +65,7 @@ namespace TodoApp.Presentation.Controllers
         [HttpPatch("MarkComplete/{id}")]
         public async Task<IActionResult> MarkComplete(
             int id,
-            MarkAsComplete dto)
+            MarkAsCompleteDto dto)
         {
             var result = await _todoService.MarkAsCompleteAsync(
                 dto
