@@ -15,8 +15,7 @@ namespace ToDoApp.Domain.Entity
         public string Description { get; set; }
         public EnumPriority Priority { get; set; }
         public DateTime CreatedAt { get; set; }
-        public DateTime ExpireDate { get; set; }
-        public string? BackGroundJobId { get; set;}
+        public DateTime? ExpireDate { get; set; }
 
         [ForeignKey(nameof(Category))]
         public int? CategoryId { get; set; }
@@ -25,7 +24,7 @@ namespace ToDoApp.Domain.Entity
         [ForeignKey(nameof(User))]
         public int UserId { get; set; }
         public User User { get; set; }
-
+        public ICollection<RecurringTodo> RecurringTodos { get; set; }
         public EnumCompleteStatus IsComplete { get; set; }
         public EnumRecurring? RecurringSetting { get; set; }
 
@@ -40,8 +39,8 @@ namespace ToDoApp.Domain.Entity
             int userId,
             DateTime expireDate,
             int? categoryId,
-            EnumRecurring? recurringSetting,
-            string? backgroundjobid)
+            EnumRecurring? recurringSetting
+            )
         {
             if (string.IsNullOrWhiteSpace(title))
                 throw new ArgumentException("The Title Is Empty");
@@ -55,7 +54,6 @@ namespace ToDoApp.Domain.Entity
             CategoryId = categoryId;
             RecurringSetting = recurringSetting;
             IsComplete = EnumCompleteStatus.NotComplete;
-            backgroundjobid = BackGroundJobId;
         }
 
         public void Update(
@@ -63,9 +61,9 @@ namespace ToDoApp.Domain.Entity
             string? description,
             EnumPriority? priority,
             DateTime? expireDate,
+            int UserId,
             int? categoryId,
-            EnumRecurring? recurring,
-            string? backgroundjobid)
+            EnumRecurring? recurring)
         {
             if (!string.IsNullOrWhiteSpace(title))
                 Title = title;
@@ -83,9 +81,6 @@ namespace ToDoApp.Domain.Entity
 
             if (recurring.HasValue)
                 RecurringSetting = recurring.Value;
-
-            if (backgroundjobid != null)
-                BackGroundJobId = backgroundjobid;
         }
 
         public void UpdateStatus(bool isComplete)

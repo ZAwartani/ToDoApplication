@@ -1,26 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Text;
+﻿using System.Linq.Expressions;
 using ToDoApp.Application.Interfaces.Specification;
 
-namespace ToDoApp.Application.Concreate.Specification
+namespace ToDoApp.Application.Concrete.Specification
 {
     public class BaseSpecificationBuilder<TEntity> : ISpecification<TEntity>
     {
-        public Expression<Func<TEntity, bool>>? Criteria { get; set; }
+        public Expression<Func<TEntity, bool>>? Criteria { get; private set; }
 
         public List<Expression<Func<TEntity, object>>> Include { get; } = new();
 
-        public Expression<Func<TEntity, object>>? OrderBy { get; set; }
+        public Expression<Func<TEntity, object>>? OrderBy { get; private set; }
 
-        public bool OrderByDescending { get; set; }
+        public bool OrderByDescending { get; private set; }
 
-        public int Skip { get; set; }
+        public int Skip { get; private set; }
 
-        public int Take {  get; set; }
+        public int Take {  get; private set; }
 
-        public bool IsPagging { get; set; }
+        public bool IsPagging { get; private set; }
        
 
         private BaseSpecificationBuilder()

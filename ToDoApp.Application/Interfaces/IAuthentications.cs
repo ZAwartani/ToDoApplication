@@ -1,22 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ToDoApp.Application.DTOs;
+using ToDoApp.Application.Dtos;
+using ToDoApp.Domain.Entity;
 
 namespace ToDoApp.Application.Interfaces
 {
     public interface IAuthentications
     {
-        Task RegisterNewUserAsync (RegisterNewUserDto RegisterDto);
-        Task<TokenRespone> Login(LoginDto LoginDto);
-        Task Logout(LogoutDto LogoutDto);
-        Task<string?> ChangePassword(ForgetPasswordOTP ForgetDto);
-        Task<bool> SendCodeAsync(SendOTP SendOTPDto);
-        Task<TokenRespone> RefreshTokenAsync(RefreshToken RefreshToken);
-        Task<IReadOnlyList<UserListDTO>?> ListOfUserForAdmin();
-        Task<bool> CreateAdminUser(RegisterNewUserDto NewUser);
+        Task RegisterNewUserAsync(RegisterNewUserDto RegisterDto);
+        Task<TokenResponeDto> LoginAsync(LoginDto LoginDto);
+        Task LogoutAsync(LogoutDto LogoutDto);
+        Task<string?> ChangePasswordAsync(ForgetPasswordOTPDto ForgetDto);
+        Task<TokenResponeDto> RefreshTokenAsync(RefreshTokenDto RefreshToken);
+        Task<IReadOnlyList<UserListDto>?> ListUserAsync();
+        Task<bool> CreateAdminUserAsync(RegisterNewUserDto NewUser);
         Task<bool> RemoveUserAsync(string Email);
-        Task<bool> ChangePasswordUserByAdmin(AdminRestPasswordUserDto AdminRestPasswordUserDto);
+        Task<bool> ChangePasswordUserByAdminAsync(AdminRestPasswordUserDto AdminRestPasswordUserDto);
 
     }
 }

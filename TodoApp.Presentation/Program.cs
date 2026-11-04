@@ -1,23 +1,29 @@
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Org.BouncyCastle.Asn1.X509.Qualified;
 using System.Text;
+using TodoApp.Presentation.BackgroundJobs;
+using TodoApp.Presentation.Identity;
 using TodoApp.Presentation.Persistence;
 using TodoApp.Presentation.Repositories;
-using ToDoApp.Application.Concreate.Factoryes;
+using TodoApp.Presentation.Service;
+using ToDoApp.Application.Concrete.Factories;
 using ToDoApp.Application.Interfaces;
+using ToDoApp.Application.Interfaces.BackgroundJob;
+using ToDoApp.Application.Interfaces.BackgroundJobs;
 using ToDoApp.Application.Interfaces.Factory;
 using ToDoApp.Application.Interfaces.Specification;
 using ToDoApp.Application.Services;
+using ToDoApp.Domain.Entity;
 
 namespace TodoApp.Presentation
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +45,19 @@ namespace TodoApp.Presentation
                 );
             });
 
+            builder.Services.AddIdentity<User, Role>(options =>
+            {
+                options.Password.RequireDigit = true;
+                options.Password.RequiredLength = 6;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireLowercase = true;
+                options.User.RequireUniqueEmail = true;
+            })
+            .AddEntityFrameworkStores<AppDbContext>()
+            .AddDefaultTokenProviders();
+
+
             builder.Services.AddHangfire(configuration => configuration.UseSqlServerStorage(
                 builder.Configuration.GetConnectionString("MyConnection")
             ));
@@ -52,18 +71,21 @@ namespace TodoApp.Presentation
             // Dependency Injection
             // ============================
             builder.Services.AddScoped(
-    typeof(IGenericRepository<,>),
-    typeof(GenericRepository<,>)
-    );
-
+                typeof(IGenericRepository<,>),
+                typeof(GenericRepository<,>)
+            );
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<ICurrentUser , CurrentUser>();
+            builder.Services.AddScoped<IAuthenticationBackgroundJob, AuthenticationBackgroundJobService>();
+            builder.Services.AddScoped<ITodoBackgroundJob, TodoBackgroundJob>();
             builder.Services.AddScoped<IAuthentications, AuthenticationServices>();
-            
+            builder.Services.AddScoped<TodoRecurring>();
             builder.Services.AddScoped<ICategoryService, CategoryService>();
 
             builder.Services.AddScoped<ITodoService, ToDoService>();
-            builder.Services.AddScoped<IFileUploadService, FileUploadService>();
+            builder.Services.AddScoped<IFileService, FileUploadService>();
             builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
-            builder.Services.AddSingleton<ISpecificationBuilderFactory,SpeificationBuilderFactory>();
+            builder.Services.AddSingleton<ISpecificationBuilderFactory, SpeificationBuilderFactory>();
 
 
             // ============================
@@ -132,6 +154,8 @@ namespace TodoApp.Presentation
                             ValidateLifetime = true,
 
                             ValidateIssuerSigningKey = true,
+
+                            ClockSkew = TimeSpan.Zero,
 
 
                             ValidIssuer =
@@ -206,7 +230,11 @@ namespace TodoApp.Presentation
 
             var app = builder.Build();
 
-
+            using (var scope = app.Services.CreateScope())
+            {
+                await IdentitySeed.SeedRolesAsync(
+                    scope.ServiceProvider);
+            }
 
             // ============================
             // Middleware Pipeline
@@ -240,8 +268,14 @@ namespace TodoApp.Presentation
 
             app.MapControllers();
 
+            RecurringJob.AddOrUpdate<TodoRecurring>(
+                            "enqueue-recurring-todos",
+                            job => job.EnqueuJobRecurringTodo(),
+                            Cron.MinuteInterval(1)
+                        );
 
-            app.Run();
+            await app.RunAsync();
         }
     }
 }
+

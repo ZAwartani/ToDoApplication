@@ -5,7 +5,7 @@ using ToDoApp.Domain.Interfaces;
 
 namespace TodoApp.Presentation.Repositories
 {
-    public class GenericRepository<TEntity, TKey> : IGenericRepository<TEntity, TKey> where TEntity :  IEntity<TKey>
+    public class GenericRepository<TEntity, TKey> : IGenericRepository<TEntity, TKey> where TEntity :class,  IEntity<TKey>
     {
         private readonly AppDbContext _context;
         public GenericRepository(AppDbContext context)
@@ -18,22 +18,17 @@ namespace TodoApp.Presentation.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> DeleteAsync(TKey Tkey)
+        public async Task DeleteAsync(TKey Tkey)
         {
             var entity = await GetByIdAsync(Tkey);
-            var IsSucssed = false;
-            if(entity != null)
-            {
                 _context.Set<TEntity>().Remove(entity);
-                IsSucssed =  (await _context.SaveChangesAsync()) > 0;
-            }
-            return IsSucssed;
+               await _context.SaveChangesAsync();
         }
 
 
-        public async Task<IReadOnlyList<TEntity>> GetAllAsync()
+        public async Task<List<TEntity>> GetAllAsync()
         {
-            var list = await _context.Set<TEntity>().AsNoTracking().ToListAsync();
+            var list = await _context.Set<TEntity>().ToListAsync();
             return list;
         }
 
@@ -41,7 +36,6 @@ namespace TodoApp.Presentation.Repositories
         {
             return await SpecificationEva<TEntity>
                 .GetQuery(_context.Set<TEntity>().AsQueryable(), specification)
-                .AsNoTracking()
                 .FirstOrDefaultAsync();
         }
 
@@ -51,31 +45,30 @@ namespace TodoApp.Presentation.Repositories
             return res;
         }
 
-        public async Task<IReadOnlyList<TEntity>> ListAsync(ISpecification<TEntity> specification)
+        public async Task<List<TEntity>> ListAsync(ISpecification<TEntity> specification)
         {
             return await SpecificationEva<TEntity>
                 .GetQuery(_context.Set<TEntity>().AsQueryable(),specification)
-                .AsNoTracking()
                 .ToListAsync();
         }
 
-        public async Task<bool> RemoveRangeAsync(IReadOnlyList<TEntity> entity)
+        public async Task RemoveRangeAsync(List<TEntity> entity)
         {
 
             _context.Set<TEntity>().RemoveRange(entity);
-            return (await _context.SaveChangesAsync()) > 0;
+            await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> UpdateAsync(TEntity entity)
+        public async Task UpdateAsync(TEntity entity)
         {
             _context.Set<TEntity>().Update(entity);
-            return (await _context.SaveChangesAsync()) > 0;
+            await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> UpdateRangeAsync(IReadOnlyList<TEntity> entity)
+        public async Task UpdateRangeAsync(List<TEntity> entity)
         {
             _context.Set<TEntity>().UpdateRange(entity);
-            return (await _context.SaveChangesAsync()) > 0;
+            await _context.SaveChangesAsync();
         }
     }
 }

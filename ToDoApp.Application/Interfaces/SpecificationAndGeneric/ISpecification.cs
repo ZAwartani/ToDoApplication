@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Text;
-using ToDoApp.Application.Concreate.Specification;
+﻿using System.Linq.Expressions;
+using ToDoApp.Application.Concrete.Specification;
 
 namespace ToDoApp.Application.Interfaces.Specification
 {

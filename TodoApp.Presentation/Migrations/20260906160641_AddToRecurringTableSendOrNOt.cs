@@ -5,24 +5,25 @@
 namespace TodoApp.Presentation.Migrations
 {
     /// <inheritdoc />
-    public partial class AddBackgroundJobId : Migration
+    public partial class AddToRecurringTableSendOrNOt : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "BackGroundJobId",
-                table: "ToDoItems",
-                type: "nvarchar(max)",
-                nullable: true);
+            migrationBuilder.AddColumn<bool>(
+                name: "IsSend",
+                table: "RecurringTodos",
+                type: "bit",
+                nullable: false,
+                defaultValue: false);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "BackGroundJobId",
-                table: "ToDoItems");
+                name: "IsSend",
+                table: "RecurringTodos");
         }
     }
 }

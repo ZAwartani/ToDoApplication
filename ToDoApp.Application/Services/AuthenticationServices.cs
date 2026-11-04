@@ -1,4 +1,5 @@
 ﻿using MailKit.Net.Smtp;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using MimeKit;
@@ -6,32 +7,27 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using ToDoApp.Application.DTOs;
+using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces;
+using ToDoApp.Application.Interfaces.BackgroundJob;
 using ToDoApp.Application.Interfaces.Factory;
 using ToDoApp.Application.Interfaces.Specification;
 using ToDoApp.Domain.Entity;
-using ToDoApp.Domain.Enums;
 
 namespace ToDoApp.Application.Services
 {
     public class AuthenticationServices : IAuthentications
     {
-        private readonly IGenericRepository<User, int> _UserRepo;
+        private readonly UserManager<User> _UserRepo;
         private readonly IGenericRepository<Token, int> _TokenRepo;
         private readonly IGenericRepository<CodeOTP, int> _CodeRepo;
-        private readonly IGenericRepository<ToDoItem, int> _TodoRepo;
-        private readonly IGenericRepository<Category, int> _CategoryRepo;
-
         private readonly ISpecificationBuilderFactory _Factory;
         private readonly IConfiguration _Configuration;
 
         public AuthenticationServices(
-            IGenericRepository<User, int> genericRepositoryUser,
+            UserManager<User> genericRepositoryUser,
             IGenericRepository<Token, int> genericRepositoryToken,
             IGenericRepository<CodeOTP, int> genericRepositoryCode,
-            IGenericRepository<ToDoItem, int> genericRepositoryTodo,
-            IGenericRepository<Category, int> genericRepositoryCategory,
             ISpecificationBuilderFactory factory,
             IConfiguration configuration)
         {
@@ -39,249 +35,211 @@ namespace ToDoApp.Application.Services
             _TokenRepo = genericRepositoryToken;
             _CodeRepo = genericRepositoryCode;
             _Factory = factory;
-            _TodoRepo = genericRepositoryTodo;
-            _CategoryRepo = genericRepositoryCategory;
             _Configuration = configuration;
         }
-        public async Task<bool> ChangePasswordUserByAdmin(
-           AdminRestPasswordUserDto AdminRestPasswordUserDto)
+
+        public async Task<bool> ChangePasswordUserByAdminAsync(AdminRestPasswordUserDto adminRestPasswordUserDto)
         {
-            var Spec = _Factory.CreateBuilder<User>()
-                .AddCriteria(x => x.Email == AdminRestPasswordUserDto.Email);
+            var user = await _UserRepo.FindByEmailAsync(adminRestPasswordUserDto.Email);
 
-
-            var User = await _UserRepo.GetAsync(Spec);
-
-            if (User == null)
+            if (user == null)
                 return false;
 
+            var token = await _UserRepo.GeneratePasswordResetTokenAsync(user);
 
-            var PasswordHash = BCrypt.Net.BCrypt
-                .HashPassword(AdminRestPasswordUserDto.Password);
+            var result = await _UserRepo.ResetPasswordAsync(
+                user,
+                token,
+                adminRestPasswordUserDto.Password);
 
-
-            User.UpdatePasswordByAdmin(PasswordHash);
-
-
-            await _UserRepo.UpdateAsync(User);
-
-            return true;
+            return result.Succeeded;
         }
 
-        public async Task<IReadOnlyList<UserListDTO>> ListOfUserForAdmin()
+        public async Task<IReadOnlyList<UserListDto>?> ListUserAsync()
         {
-            var Users = await _UserRepo.GetAllAsync();
-
-
-            return Users.Select(x => new UserListDTO(
-                    x.Id,
-                    x.Email
-                ))
+            var users = _UserRepo.Users
+                .Select(x => new UserListDto(x.Id, x.Email!))
                 .ToList();
+
+            return await Task.FromResult(users);
         }
 
-
-        public async Task<bool> CreateAdminUser(
-    RegisterNewUserDto NewUser)
+        public async Task<bool> CreateAdminUserAsync(RegisterNewUserDto newUser)
         {
+            var existingUser = await _UserRepo.FindByEmailAsync(newUser.Email);
 
-            var EmailSpec = _Factory.CreateBuilder<User>()
-                .AddCriteria(x => x.Email == NewUser.Email);
-
-            var ExistingUser =
-                (await _UserRepo.GetAsync(EmailSpec));
-
-            if (ExistingUser != null)
+            if (existingUser != null)
                 return false;
-
-            var PasswordHash =
-                BCrypt.Net.BCrypt.HashPassword(NewUser.Password);
 
             var user = new User(
-                NewUser.UserName,
-                NewUser.Email,
-                PasswordHash,
-                enumUserRole.UserAdmin
-            );
+                newUser.UserName,
+                newUser.Email);
 
-            await _UserRepo.AddAsync(user);
+            var result = await _UserRepo.CreateAsync(
+                user,
+                newUser.Password);
 
-            return true;
-        }
-
-        public async Task<bool> RemoveUserAsync(string Email)
-        {
-            var Spec = _Factory.CreateBuilder<User>()
-                .AddCriteria(x => x.Email == Email);
-
-            var User =
-                (await _UserRepo.GetAsync(Spec));
-
-            if (User == null)
+            if (!result.Succeeded)
                 return false;
 
-            await _UserRepo.DeleteAsync(User.Id);
+            var roleResult = await _UserRepo.AddToRoleAsync(
+                user,
+                "Admin");
 
-            return true;
-        }
-        public async Task RegisterNewUserAsync(RegisterNewUserDto RegisterDto)
-        {
-            var PasswordHash = BCrypt.Net.BCrypt.HashPassword(RegisterDto.Password);
-            var User = new User(
-                RegisterDto.UserName,
-                RegisterDto.Email,
-                PasswordHash,
-                enumUserRole.User
-            );
-
-            await _UserRepo.AddAsync(User);
+            return roleResult.Succeeded;
         }
 
-        public async Task<TokenRespone?> Login(LoginDto LoginDto)
+        public async Task<bool> RemoveUserAsync(string email)
         {
-            var Spec = _Factory.CreateBuilder<User>()
-                .AddCriteria(u => u.Email == LoginDto.Email);
+            var user = await _UserRepo.FindByEmailAsync(email);
 
-            var User = await _UserRepo.GetAsync(Spec);
+            if (user == null)
+                return false;
 
-            if (User == null || !BCrypt.Net.BCrypt.Verify(LoginDto.Password, User.Password))
-                throw new Exception("Invalid email or password");
+            var result = await _UserRepo.DeleteAsync(user);
 
+            return result.Succeeded;
+        }
 
-            var TokenSpec = _Factory.CreateBuilder<Token>()
-                 .AddCriteria(t => t.UserId == User.Id)
-                 .AddCriteria(t => !t.RefreshTokenRevokedAt.HasValue)
-                 .ApplyOrderBy(t => t.CreatedDate , true);
+        public async Task RegisterNewUserAsync(RegisterNewUserDto registerDto)
+        {
+            var user = new User(
+                registerDto.UserName,
+                registerDto.Email);
 
-            var UserToken = await _TokenRepo.GetAsync(TokenSpec);
+            var result = await _UserRepo.CreateAsync(
+                user,
+                registerDto.Password);
 
-            if (UserToken != null)
+            if (!result.Succeeded)
             {
-                UserToken.RefreshTokenRevokedAt = DateTime.UtcNow;
-                await _TokenRepo.UpdateAsync(UserToken);
+                var errors = string.Join(
+                    ", ",
+                    result.Errors.Select(e => e.Description));
+
+                throw new InvalidOperationException(
+                    $"User registration failed: {errors}");
             }
 
-            var TokenResponse = await GenerateAndSaveTokensAsync(User);
-            return TokenResponse;
+            var roleResult = await _UserRepo.AddToRoleAsync(
+                user,
+                "User");
+
+            if (!roleResult.Succeeded)
+            {
+                var roleErrors = string.Join(
+                    ", ",
+                    roleResult.Errors.Select(e => e.Description));
+
+                throw new InvalidOperationException(
+                    $"Failed to assign role: {roleErrors}");
+            }
         }
 
-        public async Task Logout(LogoutDto LogoutDto)
+        public async Task<TokenResponeDto?> LoginAsync(LoginDto loginDto)
         {
-            var Spec = _Factory.CreateBuilder<User>()
-                .AddCriteria(u => u.Email == LogoutDto.Email);
+            var user = await _UserRepo.FindByEmailAsync(loginDto.Email);
 
-            var User = (await _UserRepo.GetAsync(Spec));
+            if (user == null)
+                throw new Exception("Invalid email or password");
 
-            if (User == null)
-                throw new Exception("User not found");
+            var isPasswordValid = await _UserRepo.CheckPasswordAsync(
+                user,
+                loginDto.Password);
 
-            var TokenSpec = _Factory.CreateBuilder<Token>()
-                .AddCriteria(t => t.UserId == User.Id)
+            if (!isPasswordValid)
+                throw new Exception("Invalid email or password");
+
+            var tokenSpec = _Factory.CreateBuilder<Token>()
+                .AddCriteria(t => t.UserId == user.Id)
+                .AddCriteria(t => !t.RefreshTokenRevokedAt.HasValue)
                 .ApplyOrderBy(t => t.CreatedDate, true);
 
-            var UserToken = await _TokenRepo.GetAsync(TokenSpec);
+            var existingToken = await _TokenRepo.GetAsync(tokenSpec);
 
-            if (!BCrypt.Net.BCrypt.Verify(LogoutDto.RefreshToken, UserToken.RefreshToken) && UserToken != null)
-                throw new Exception("The refresh token is invalid");
+            if (existingToken != null)
+            {
+                existingToken.RefreshTokenRevokedAt = DateTime.UtcNow;
 
-            UserToken.RefreshTokenRevokedAt = DateTime.UtcNow;
+                await _TokenRepo.UpdateAsync(existingToken);
+            }
 
-            await _TokenRepo.UpdateAsync(UserToken);
+            return await GenerateAndSaveTokensAsync(user);
         }
 
-        public async Task<string?> ChangePassword(ForgetPasswordOTP ForgetDto)
+        public async Task LogoutAsync(LogoutDto logoutDto)  
         {
-            var UserSpec = _Factory.CreateBuilder<User>()
-                .AddCriteria(u => u.Email == ForgetDto.Email);
-
-            var User = await _UserRepo.GetAsync(UserSpec);
-
-            if (User == null)
-                throw new Exception("User not found");
-
-            var otpSpec = _Factory.CreateBuilder<CodeOTP>()
-                .AddCriteria(c => c.UserId == User.Id);
-
-            var Otp = await _CodeRepo.GetAsync(otpSpec);
-
-            if (Otp == null)
-                throw new Exception("Invalid verification code");
-
-            if (Otp.Code != ForgetDto.OTP)
-                throw new Exception("Invalid verification code");
-
-            if (Otp.CodeExpirDate< DateTime.UtcNow)
-                throw new Exception("Verification code has expired");
-
-            User.Password = BCrypt.Net.BCrypt.HashPassword(ForgetDto.Password);
-            await _UserRepo.UpdateAsync(User);
-
-            await _CodeRepo.DeleteAsync(Otp.Id);
-
-            return "Password Changed Successfully";
-        }
-
-        public async Task<bool> SendCodeAsync(SendOTP sendOTPDto)
-        {
-            var Spec = _Factory.CreateBuilder<User>()
-                .AddCriteria(u => u.Email == sendOTPDto.Email);
-
-            var user = (await _UserRepo.GetAsync(Spec));
+            var user = await _UserRepo.FindByEmailAsync(logoutDto.Email);
 
             if (user == null)
                 throw new Exception("User not found");
 
-            string CodeOTPToEmail = RandomNumberGenerator.GetInt32(10000, 99999).ToString();
-            MimeMessage Message = new MimeMessage();
-            Message.From.Add(new MailboxAddress("TodoApp", "zakaryawork005@gmail.com"));
-            Message.To.Add(new MailboxAddress("User", sendOTPDto.Email));
-            Message.Subject = "Reset Your Password - TodoApp";
+            var tokenSpec = _Factory.CreateBuilder<Token>()
+                .AddCriteria(t => t.UserId == user.Id)
+                .AddCriteria(t => t.RefreshToken == logoutDto.RefreshToken)
+                .AddCriteria(t => !t.RefreshTokenRevokedAt.HasValue);
 
-            Message.Body = new TextPart("plain")
-            {
-                Text = $"This is your verification code: {CodeOTPToEmail}. It will expire in 5 minutes."
-            };
+            var userToken = await _TokenRepo.GetAsync(tokenSpec);
 
-            await _CodeRepo.RemoveRangeAsync(await _CodeRepo.ListAsync(_Factory.CreateBuilder<CodeOTP>().AddCriteria(c => c.UserId == user.Id)));
-            
-            var NewOtp = new CodeOTP
-            (
-                    CodeOTPToEmail,
-                    DateTime.UtcNow.AddMinutes(5),
-                    user.Id
-            );
+            if (userToken == null)
+                throw new Exception(
+                    "The refresh token is invalid or already revoked");
 
-            await _CodeRepo.AddAsync(NewOtp);
+            userToken.RefreshTokenRevokedAt = DateTime.UtcNow;
 
-            using (var client = new SmtpClient())
-            {
-                try
-                {
-                    await client.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
-                    await client.AuthenticateAsync("zakaryawork005@gmail.com", "qkukqdjeaqbxkjod");
-                    await client.SendAsync(Message);
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"حدث خطأ أثناء الإرسال: {ex.Message}");
-                    return false;
-                }
-                finally
-                {
-                    await client.DisconnectAsync(true);
-                }
-            }
+            await _TokenRepo.UpdateAsync(userToken);
         }
 
-        public async Task<TokenRespone?> RefreshTokenAsync(RefreshToken RefreshToken)
+        public async Task<string?> ChangePasswordAsync(ForgetPasswordOTPDto forgetDto)
         {
-            var TokenSpec = _Factory.CreateBuilder<Token>()
-                .AddCriteria(t => t.User.Email == RefreshToken.Email)
+            var user = await _UserRepo.FindByEmailAsync(forgetDto.Email);
+
+            if (user == null)
+                throw new Exception("User not found");
+
+            var otpSpec = _Factory.CreateBuilder<CodeOTP>()
+                .AddCriteria(c => c.UserId == user.Id)
+                .AddCriteria(c => c.Code == forgetDto.OTP);
+
+            var otp = await _CodeRepo.GetAsync(otpSpec);
+
+            if (otp == null)
+                throw new Exception("Invalid verification code");
+
+            if (otp.CodeExpirDate < DateTime.UtcNow)
+                throw new Exception("Verification code has expired");
+
+            var result = await ResetPasswordManualAsync(
+                user,
+                forgetDto.Password);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(
+                    ", ",
+                    result.Errors.Select(e => e.Description));
+
+                throw new Exception(
+                    $"Password reset failed: {errors}");
+            }
+
+            await _CodeRepo.DeleteAsync(otp.Id);
+
+            return "Password Changed Successfully";
+        }
+
+        
+
+        public async Task<TokenResponeDto?> RefreshTokenAsync(
+            RefreshTokenDto refreshToken)
+        {
+            var tokenSpec = _Factory.CreateBuilder<Token>()
+                .AddCriteria(t => t.User.Email == refreshToken.Email)
+                .AddCriteria(t => t.RefreshToken == refreshToken.Refreshtoken)
                 .AddInclude(t => t.User)
                 .ApplyOrderBy(t => t.CreatedDate, true);
 
-            var userToken = await _TokenRepo.GetAsync(TokenSpec);
+            var userToken = await _TokenRepo.GetAsync(tokenSpec);
 
             if (userToken == null)
                 throw new Exception("Invalid refresh token");
@@ -294,12 +252,6 @@ namespace ToDoApp.Application.Services
             if (userToken.RefreshTokenExpir < DateTime.UtcNow)
                 throw new Exception("Refresh token has expired");
 
-            if (!BCrypt.Net.BCrypt.Verify(
-                    RefreshToken.Refreshtoken,
-                    userToken.RefreshToken))
-                throw new Exception("Invalid refresh token");
-
-
             userToken.RefreshTokenRevokedAt = DateTime.UtcNow;
 
             await _TokenRepo.UpdateAsync(userToken);
@@ -307,65 +259,94 @@ namespace ToDoApp.Application.Services
             return await GenerateAndSaveTokensAsync(user);
         }
 
-        private async Task<TokenRespone> GenerateAndSaveTokensAsync(User User)
+        private async Task<TokenResponeDto> GenerateAndSaveTokensAsync(User user)
         {
-            var TokenHandler = new JwtSecurityTokenHandler();
+            var utcNow = DateTime.UtcNow;
 
-            var JWTKey = _Configuration["JWT:Key"]
-                ?? throw new Exception("JWT key is not configured");
+            var roles = await _UserRepo.GetRolesAsync(user);
 
-            var JWTIssuer = _Configuration["JWT:Issuer"];
-            var JWTAudience = _Configuration["JWT:Audience"];
-
-            var Claims = new[]
+            var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, User.Id.ToString()),
-                new Claim(ClaimTypes.Email, User.Email),
-                new Claim(ClaimTypes.Role, User.RoleId.ToString())
+                new Claim(
+                    ClaimTypes.NameIdentifier,
+                    user.Id.ToString()),
+
+                new Claim(
+                    ClaimTypes.Email,
+                    user.Email ?? string.Empty),
+
+                new Claim(
+                    ClaimTypes.Name,
+                    user.UserName ?? string.Empty)
             };
 
-            var Key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(JWTKey));
+            foreach (var role in roles)
+            {
+                claims.Add(
+                    new Claim(
+                        ClaimTypes.Role,
+                        role));
+            }
 
-            var Credentials = new SigningCredentials(
-                Key,
+            var jwtKey = _Configuration["JWT:Key"]
+                ?? throw new InvalidOperationException(
+                    "JWT key is not configured");
+
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtKey));
+
+            var credentials = new SigningCredentials(
+                key,
                 SecurityAlgorithms.HmacSha256);
 
-            var JWT = new JwtSecurityToken(
-                issuer: JWTIssuer,
-                audience: JWTAudience,
-                claims: Claims,
-                expires: DateTime.UtcNow.AddMinutes(15),
-                signingCredentials: Credentials);
+            var jwt = new JwtSecurityToken(
+                issuer: _Configuration["JWT:Issuer"],
+                audience: _Configuration["JWT:Audience"],
+                claims: claims,
+                expires: utcNow.AddMinutes(15),
+                signingCredentials: credentials);
 
-            var AccessToken = TokenHandler.WriteToken(JWT);
+            var accessToken =
+                new JwtSecurityTokenHandler().WriteToken(jwt);
 
-            var RawRefreshToken = GenerateRefreshToken();
+            var rawRefreshToken = GenerateRefreshToken();
 
-            var HashedRefreshToken = BCrypt.Net.BCrypt.HashPassword(RawRefreshToken);
-
-            var UserToken = new Token
-            (
-                User.Id,
-                HashedRefreshToken,
-                DateTime.UtcNow.AddDays(7),
+            var userToken = new Token(
+                user.Id,
+                rawRefreshToken,
+                utcNow.AddDays(7),
                 null,
-                DateTime.UtcNow
-            );
+                utcNow);
 
-            await _TokenRepo.AddAsync(UserToken);
+            await _TokenRepo.AddAsync(userToken);
 
-            return new TokenRespone(
-                AccessToken,
-                RawRefreshToken);
+            return new TokenResponeDto(
+                accessToken,
+                rawRefreshToken);
         }
 
         private string GenerateRefreshToken()
         {
-            var Bytes = new byte[64];
-            using var RNG = RandomNumberGenerator.Create();
-            RNG.GetBytes(Bytes);
-            return Convert.ToBase64String(Bytes);
+            var bytes = new byte[64];
+
+            using var rng = RandomNumberGenerator.Create();
+
+            rng.GetBytes(bytes);
+
+            return Convert.ToBase64String(bytes);
+        }
+
+        private async Task<IdentityResult> ResetPasswordManualAsync(
+            User user,
+            string newPassword)
+        {
+            var resetToken =
+                await _UserRepo.GeneratePasswordResetTokenAsync(user);
+
+            return await _UserRepo.ResetPasswordAsync(
+                user,
+                resetToken,
+                newPassword);
         }
     }
 }

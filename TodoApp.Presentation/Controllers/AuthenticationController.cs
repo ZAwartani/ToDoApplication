@@ -1,8 +1,9 @@
 ﻿using Hangfire;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using ToDoApp.Application.DTOs;
+using TodoApp.Presentation.BackgroundJobs;
+using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces;
+using ToDoApp.Application.Interfaces.BackgroundJob;
 
 namespace TodoApp.Presentation.Controllers
 {
@@ -11,81 +12,62 @@ namespace TodoApp.Presentation.Controllers
     public class AuthenticationController : ControllerBase
     {
         private readonly IAuthentications _authentications;
-        public AuthenticationController(IAuthentications authentications)
+        private readonly IAuthenticationBackgroundJob _authenticationBackgroundJob;
+
+        public AuthenticationController(IAuthentications authentications , IAuthenticationBackgroundJob authenticationBackgroundJob)
         {
-            this._authentications = authentications;
+            _authentications = authentications;
+            _authenticationBackgroundJob = authenticationBackgroundJob;
         }
 
         [HttpPost("Login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
-            var result = await _authentications.Login(dto);
-            if (result != null) {
-                return Ok(new
-                {
-                    message = "Login Sucessful",
-                    token = result.AccessToken,
-                    RefreshToken = result.RefreshToken
-                });
-            }
-            else
-            {
-                return Unauthorized(new {Message = "The Email Or Password Is Uncorrect"});
-            }
+            var result = await _authentications.LoginAsync(dto);
+
+            return Ok(result);
         }
 
         [HttpPost("Register")]
         public async Task<IActionResult> Register(RegisterNewUserDto dto)
         {
             await _authentications.RegisterNewUserAsync(dto);
-            return Ok("Register Sucessful");
+
+            return Ok("Register Successful");
         }
 
         [HttpPost("ForgetPassword")]
-        public async Task<IActionResult> ForgetPassword([FromBody] SendOTP sendOTP)
+        public async Task<IActionResult> ForgetPassword(SendOTPDto dto)
         {
-            BackgroundJob.Enqueue(() => _authentications.SendCodeAsync(sendOTP));
-            return Ok("We will send you a code to reset your password. This can take up to 3 minutes");
+            await _authenticationBackgroundJob.SendOTPAsync(dto);
+            return Ok("We will send you a code to reset your password.");
         }
 
         [HttpPost("Reset-Password")]
-        public async Task<IActionResult> ResetPassword(ForgetPasswordOTP dto)
+        public async Task<IActionResult> ResetPassword(ForgetPasswordOTPDto dto)
         {
-            var result = await _authentications.ChangePassword(dto);
-            if(result != null)
-            {
-                return Ok(result);
-            }
-            else
-            {
-                return BadRequest();
-            }
+            var result = await _authentications.ChangePasswordAsync(dto);
+
+            return Ok(result);
         }
 
         [HttpPost("RefreshToken")]
-        public async Task<IActionResult> FreshToken(RefreshToken dto)
+        public async Task<IActionResult> RefreshToken(RefreshTokenDto dto)
         {
-            var token = await _authentications.RefreshTokenAsync(dto);
-            if (token != null)
-            {
-                return Ok(new
-                {
-                    message = "Refresh Token Sucessfull",
-                    token = token.AccessToken,
-                    Refresh = token.RefreshToken
-                });
-            }
-            else
-            {
-                return Unauthorized(new {message = "The Code Is Not Correct"});
-            }
+            var result = await _authentications.RefreshTokenAsync(dto);
+
+            return Ok(result);
         }
 
         [HttpPost("Logout")]
         public async Task<IActionResult> Logout(LogoutDto dto)
         {
-            await _authentications.Logout(dto);
-            return Ok(new { message = "Logout Sucessful" });
+            await _authentications.LogoutAsync(dto);
+
+            return Ok(new
+            {
+                message = "Logout Successful"
+            });
         }
     }
 }

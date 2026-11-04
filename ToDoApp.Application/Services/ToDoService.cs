@@ -1,9 +1,11 @@
 ﻿using MailKit.Net.Smtp;
 using MimeKit;
+using Org.BouncyCastle.Crypto.Signers;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
-using ToDoApp.Application.DTOs;
+using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces;
+using ToDoApp.Application.Interfaces.BackgroundJobs;
 using ToDoApp.Application.Interfaces.Factory;
 using ToDoApp.Application.Interfaces.Specification;
 using ToDoApp.Domain.Entity;
@@ -13,7 +15,9 @@ namespace ToDoApp.Application.Services
 {
     public class ToDoService : ITodoService
     {
+        private readonly ICurrentUser _currentUser;
         private readonly IGenericRepository<ToDoItem, int> _RepoTodo;
+        private readonly ITodoBackgroundJob _TodoBackgroundJob;
         private readonly IGenericRepository<Category, int> _RepoCategory;
         private readonly IGenericRepository<User, int> _RepoUser;
         private readonly ISpecificationBuilderFactory _Factory;
@@ -23,16 +27,22 @@ namespace ToDoApp.Application.Services
             IGenericRepository<ToDoItem, int> genericRepositoryTodoItem,
             IGenericRepository<Category, int> genericRepositoryCategory,
             IGenericRepository<User, int> genericRepositoryUser,
-            ISpecificationBuilderFactory factory
+            ISpecificationBuilderFactory factory,
+            ITodoBackgroundJob todoBackgroundJob,
+            ICurrentUser _currentUser
             )
         {
+            this._currentUser = _currentUser;
             this._RepoTodo = genericRepositoryTodoItem;
             this._RepoCategory = genericRepositoryCategory;
             this._Factory = factory;
             this._RepoUser = genericRepositoryUser;
+            this._TodoBackgroundJob = todoBackgroundJob;
         }
-        public async Task<bool> UpdateTodoForUser(UpdateTodoDto UpdateTodoDto, int Id)
+        private int UserId => _currentUser.Id;
+        public async Task<bool> UpdateTodoForUserAsync(UpdateTodoDto UpdateTodoDto)
         {
+            int Id = UpdateTodoDto.Id;
 
             var ToDo = await _RepoTodo.GetByIdAsync(Id);
 
@@ -44,54 +54,68 @@ namespace ToDoApp.Application.Services
                 UpdateTodoDto.Description,
                 UpdateTodoDto.Priority,
                 UpdateTodoDto.ExpireDate,
+                UserId,
                 UpdateTodoDto.CategoryId,
-                UpdateTodoDto.Recurring,
-                UpdateTodoDto.BackGroundJobId
+                UpdateTodoDto.Recurring
             );
 
             await _RepoTodo.UpdateAsync(ToDo);
             return true;
         }
-        public async Task<bool> Create(CreateTodoDto Dto, int UserId , string? BackGroundJobId)
+        public async Task<bool> CreateAsync(CreateTodoDto Dto)
         {
-            object Todo;
-            if(Dto.CategoryId == null)
+            int? CategoryId;
+            if (Dto.CategoryId == null)
             {
-                Todo = new ToDoItem(
-                    Dto.Title,
-                    Dto.Description,
-                    Dto.Priority,
-                    UserId,
-                    Dto.ExpireDate,
-                    null,
-                    Dto.Recurring,
-                    BackGroundJobId
-                );
+                 CategoryId = null;
             }
+            else
+            {
 
-            var CategorySpec = _Factory.CreateBuilder<Category>()
-                .AddCriteria(x => x.UserId == UserId)
-                .AddCriteria(x => x.Id == Dto.CategoryId);
+                var CategorySpec = _Factory.CreateBuilder<Category>()
+                    .AddCriteria(x => x.UserId == UserId)
+                    .AddCriteria(x => x.Id == Dto.CategoryId);
 
-            var Category = await _RepoCategory.GetAsync(CategorySpec);
+                var Category = await _RepoCategory.GetAsync(CategorySpec);
 
-            var todo = new ToDoItem(
-                   Dto.Title,
-                   Dto.Description,
-                   Dto.Priority,
-                   UserId,
-                   Dto.ExpireDate,
-                   Dto.CategoryId,
-                   Dto.Recurring,
-                   BackGroundJobId
-
-            );
-            await _RepoTodo.AddAsync(todo);
-
+                if (Category != null)
+                {
+                    CategoryId = Category.Id;
+                }
+                else
+                {
+                    throw new Exception("We have Problem");
+                }
+            }
+            var Todo = new ToDoItem(
+                Dto.Title,
+                Dto.Description,
+                Dto.Priority,
+                UserId,
+                Dto.ExpireDate,
+                CategoryId,
+                Dto.Recurring
+            ); 
+            await _RepoTodo.AddAsync(Todo);
+            if(Todo.RecurringSetting != null)
+            {
+                var TodoReturn = new ReturnTodoItemDto(
+                    Todo.Id,
+                    Todo.Title,
+                    Todo.Description,
+                    Todo.Priority,
+                    Todo.CreatedAt,
+                    Todo.ExpireDate,
+                    Todo.CategoryId,
+                    Todo.IsComplete,
+                    Todo.RecurringSetting
+                );
+                await _TodoBackgroundJob.AddRecurringTodoAsync(TodoReturn);
+            }
             return true;
-        } // checked
+        }
 
-        public async Task<IReadOnlyList<ReturnTodoItem>> ListAsync(int UserId, string? FilterBy, bool Descending)
+        public async Task<IReadOnlyList<ReturnTodoItemDto>> ListAsync(string? FilterBy, bool Descending)
         {
             var Spec = _Factory.CreateBuilder<ToDoItem>()
                 .AddCriteria(x => x.UserId == UserId);
@@ -125,7 +149,7 @@ namespace ToDoApp.Application.Services
             if (Result == null ||  Result.Count == 0)
                 throw new Exception("User doesn't have any TodoItems");
 
-            var Mapped = Result.Select(x => new ReturnTodoItem(
+            var Mapped = Result.Select(x => new ReturnTodoItemDto(
                 x.Id,
                 x.Title,
                 x.Description,
@@ -140,12 +164,10 @@ namespace ToDoApp.Application.Services
             return Mapped;
         }
 
-        public async Task<bool> Update(
-            UpdateTodoDto Dto,
-            int Id,
-            int UserId,
-            string? backGroundJobId)
+        public async Task<bool> UpdateAsync(
+            UpdateTodoDto Dto)
         {
+            var Id = Dto.Id;
             var ToDo = await _RepoTodo.GetByIdAsync(Id);
 
             if (ToDo == null || ToDo.UserId != UserId)
@@ -156,17 +178,16 @@ namespace ToDoApp.Application.Services
                 Dto.Description,
                 Dto.Priority,
                 Dto.ExpireDate,
+                UserId,
                 Dto.CategoryId,
-                Dto.Recurring,
-                backGroundJobId
+                Dto.Recurring
             );
             await _RepoTodo.UpdateAsync(ToDo);
             return true;
         } // Checked
 
-        public async Task<bool> Delete(
-            int Id,
-            int UserId)
+        public async Task<bool> DeleteAsync(
+            int Id)
         {
 
             var ToDo = await _RepoTodo
@@ -183,12 +204,10 @@ namespace ToDoApp.Application.Services
             return true;
         }
 
-        public async Task<bool> MarkAsComplete(
-            MarkAsComplete Dto,
-            int Id,
-            int UserId)
+        public async Task<bool> MarkAsCompleteAsync(
+            MarkAsCompleteDto Dto)
         {
-
+            var Id = Dto.Id;
             var ToDo = await _RepoTodo
                 .GetByIdAsync(Id);
 
@@ -206,8 +225,9 @@ namespace ToDoApp.Application.Services
             return true;
         }
 
-        public async Task SendEmailReminderAsync(int UserId, string Title, DateTime? ExpireDate)
+        public async Task SendEmailReminderAsync(string Title, DateTime? ExpireDate)
         {
+
             var Spec = _Factory.CreateBuilder<User>()
                 .AddCriteria(u => u.Id == UserId);
 
@@ -245,72 +265,6 @@ namespace ToDoApp.Application.Services
                 }
             }
             Console.WriteLine($"Sending email reminder to user {UserId} for todo '{Title}' expiring on {ExpireDate}");
-        }
-
-        public async Task CreateRecurringTodoAsync(CreateTodoDto Dto, int UserId , EnumRecurring EnumRecurring)
-        {
-            if (EnumRecurring == EnumRecurring.Daily)
-            {
-                var ToDo = new ToDoItem(
-                    Dto.Title,
-                    Dto.Description,
-                    Dto.Priority,
-                    UserId,
-                    Dto.ExpireDate,
-                    Dto.CategoryId,
-                    EnumRecurring.Daily,
-                    Dto.BackGroundJobId
-                    
-                );
-                _RepoTodo.AddAsync(ToDo);
-            }
-            else if (EnumRecurring == EnumRecurring.Weekly)
-            {
-                var ToDo = new ToDoItem(
-                    Dto.Title,
-                    Dto.Description,
-                    Dto.Priority,
-                    UserId,
-                    Dto.ExpireDate,
-                    Dto.CategoryId,
-                    EnumRecurring.Weekly,
-                    Dto.BackGroundJobId
-                );
-                _RepoTodo.AddAsync(ToDo);
-            }
-            else if (EnumRecurring == EnumRecurring.Monthly)
-            {
-                var ToDo = new ToDoItem(
-                    Dto.Title,
-                    Dto.Description,
-                    Dto.Priority,
-                    UserId,
-                    Dto.ExpireDate,
-                    Dto.CategoryId,
-                    EnumRecurring.Monthly,
-                    Dto.BackGroundJobId
-                );
-                _RepoTodo.AddAsync(ToDo);
-            }
-        }
-
-        public async Task<string> GetTitleOfJob(int Id)
-        {
-            var Spec =  _Factory.CreateBuilder<ToDoItem>()
-                .AddCriteria(x => x.Id == Id);
-
-            var ResultFromQuery = await _RepoTodo.GetAsync(Spec);
-            
-            if(ResultFromQuery == null)
-            {
-                throw new Exception();
-            }
-            var TitleOfBackgroundJob = ResultFromQuery.BackGroundJobId;
-            if (TitleOfBackgroundJob == null)
-            {
-                return null;
-            }
-            return TitleOfBackgroundJob;
         }
     }
 }

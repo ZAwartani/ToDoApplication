@@ -4,9 +4,9 @@ using System.Text;
 
 namespace ToDoApp.Domain.Enums
 {
-    public enum enumUserRole
+    public enum EnumStatusJob
     {
-        User = 1,
-        UserAdmin = 2,
+        Sent = 0,
+        Fail = 1,
     }
 }

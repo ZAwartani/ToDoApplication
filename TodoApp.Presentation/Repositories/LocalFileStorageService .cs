@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using ToDoApp.Application.Dtos;
 using ToDoApp.Application.Interfaces;
 
 namespace ToDoApp.Application.Services
@@ -77,7 +78,7 @@ namespace ToDoApp.Application.Services
             return Task.FromResult((IReadOnlyList<string>)files);
         }
 
-        public async Task<(byte[] Content, string ContentType, string FileName)> DownloadFileAsync(string fileName)
+        public async Task<DownloadFileDto> DownloadFileAsync(string fileName)
         {
             var folder = Path.Combine(
              _Environment.WebRootPath,
@@ -93,7 +94,12 @@ namespace ToDoApp.Application.Services
 
             var contentType = "application/octet-stream";
 
-            return (content, contentType, fileName);
+            return new DownloadFileDto
+            (
+                content,
+                contentType,
+                fileName
+            );
         }
     }
 }

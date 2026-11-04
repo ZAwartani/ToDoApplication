@@ -4,15 +4,15 @@ using System.Security.Cryptography.Pkcs;
 using System.Text;
 using ToDoApp.Domain.Enums;
 
-namespace ToDoApp.Application.DTOs
+namespace ToDoApp.Application.Dtos
 {
-    public record ReturnTodoItem(
+    public record ReturnTodoItemDto(
     int Id,
     string Title,
     string Description,
     EnumPriority Priority,
     DateTime CreatedAt,
-    DateTime ExpireDate,
+    DateTime? ExpireDate,
     int? CategoryId,
     EnumCompleteStatus CompleteStatus,
     EnumRecurring? Recurring
@@ -24,42 +24,40 @@ namespace ToDoApp.Application.DTOs
         string Description,
         EnumPriority Priority,
         DateTime ExpireDate,
+        int UserId,
         int? CategoryId,
         EnumRecurring? Recurring,
-        string? BackGroundJobId
+        EnumCompleteStatus CompleteStatus
     );
 
 
     public record UpdateTodoDto(
+        int Id,
         string? Title,
         string? Description,
         EnumPriority? Priority,
         DateTime ExpireDate,
+        int UserId,
         int? CategoryId,
         EnumRecurring? Recurring,
-        EnumCompleteStatus? IsCompleted,
-        string? BackGroundJobId
-
-    );
+        EnumCompleteStatus? IsCompleted
+    );       
 
 
-    public record MarkAsComplete(
+    public record MarkAsCompleteDto(
+        int Id,
+        int UserId,
         bool IsComplete
     );
 
-    public record TodoItemDTO
+    public record TodoItemDto
     (
         int Id,
         string Title,
         string Description,
         EnumPriority Priority,
-        DateTime ExpireDate,
+        DateTime? ExpireDate,
+        int UserId,
         EnumCompleteStatus IsComplete
-    );
-
-    public record TodoItemSendNotificationDTO
-    (
-        string Title,
-        DateTime ExpireAt
     );
 }

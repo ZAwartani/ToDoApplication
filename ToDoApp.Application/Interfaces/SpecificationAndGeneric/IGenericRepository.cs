@@ -1,22 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using ToDoApp.Application.DTOs;
+using ToDoApp.Application.Dtos;
 using ToDoApp.Domain.Interfaces;
 
 namespace ToDoApp.Application.Interfaces.Specification
 {
-    public interface IGenericRepository<TEntity , TKey> where TEntity : IEntity<TKey>
+    public interface IGenericRepository<TEntity , TKey> where TEntity : class , IEntity<TKey>
     {
         Task AddAsync(TEntity entity);
-        Task<bool> UpdateAsync(TEntity entity);
-        Task<bool> UpdateRangeAsync(IReadOnlyList<TEntity> entity);
-        Task<bool> RemoveRangeAsync(IReadOnlyList<TEntity> entity);
-        Task<bool> DeleteAsync(TKey Tkey);
-        Task<IReadOnlyList<TEntity>> GetAllAsync();
+        Task UpdateAsync(TEntity entity);
+        Task UpdateRangeAsync(List<TEntity> entity);
+        Task RemoveRangeAsync(List<TEntity> entity);
+        Task DeleteAsync(TKey Tkey);
+        Task<List<TEntity>> GetAllAsync();
         Task<TEntity?> GetByIdAsync(TKey key);
         Task<TEntity> GetAsync(ISpecification<TEntity> specification);
-        Task<IReadOnlyList<TEntity>> ListAsync(ISpecification<TEntity> specification);
+        Task<List<TEntity>> ListAsync(ISpecification<TEntity> specification);
 
     }
 }

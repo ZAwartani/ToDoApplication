@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System.Data;
 using System.Net.Mail;
 using ToDoApp.Domain.Entity;
@@ -6,20 +7,19 @@ using ToDoApp.Domain.Enums;
 
 namespace TodoApp.Presentation.Persistence
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<User , Role , int>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
             
         }
 
-        DbSet<User> Users { get; set; }
-        DbSet<CodeOTP> codeOTPs { get; set; }
-        DbSet<Token> tokens { get; set; }
-        DbSet<Role> Roles { get; set; }
-        DbSet<ToDoItem> ToDoItems { get; set; }
-        DbSet<Category> Categories { get; set; }
-        DbSet<FilesUpload> FilesUploads { get; set; }
+        public DbSet<CodeOTP> codeOTPs { get; set; }
+        public DbSet<Token> tokens { get; set; }
+        public DbSet<ToDoItem> ToDoItems { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<FilesUpload> FilesUploads { get; set; }
+        public DbSet<RecurringTodo> RecurringTodos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,6 +39,12 @@ namespace TodoApp.Presentation.Persistence
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<RecurringTodo>()
+                .HasOne(x => x.Todo)
+                .WithMany(x => x.RecurringTodos)
+                .HasForeignKey(x => x.TodoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<ToDoItem>()
                 .HasOne(x => x.User)
                 .WithMany(x => x.ToDoItems)
@@ -54,19 +60,6 @@ namespace TodoApp.Presentation.Persistence
             modelBuilder.Entity<Category>()
            .HasIndex(c => new { c.UserId, c.Title })
            .IsUnique();
-
-            modelBuilder.Entity<Role>()
-                .HasData(
-                    new Role
-                    {
-                        Id = enumUserRole.UserAdmin,
-                        RoleName = "Admin"
-                    },
-                    new Role
-                    {
-                        Id = enumUserRole.User,
-                        RoleName = "User"
-                    });
 
             modelBuilder.Entity<FilesUpload>()
                 .HasIndex(x => x.Path);
